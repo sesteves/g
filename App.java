@@ -124,7 +124,7 @@ public class App {
         else
           row = new ArrayList<ShortestPath>();
         row.add(shortestPath);
-        columns.put(pair.left, row);
+        rows.put(pair.left, row);
 
         // add to columns
         List<ShortestPath> column;
