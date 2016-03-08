@@ -117,6 +117,24 @@ public class App {
         ShortestPath shortestPath = new ShortestPath(pair.left, pair.right, distance, newPath);
         shortestPaths.put(pair, shortestPath);
 
+        // add to rows
+        List<ShortestPath> row;
+        if(rows.containsKey(pair.left))
+          row = rows.get(pair.left);
+        else
+          row = new ArrayList<ShortestPath>();
+        row.add(shortestPath);
+        columns.put(pair.left, row);
+
+        // add to columns
+        List<ShortestPath> column;
+        if(columns.containsKey(pair.right))
+          column = columns.get(pair.right);
+        else
+          column = new ArrayList<ShortestPath>();
+        column.add(shortestPath);
+        columns.put(pair.right, column);
+
         addPathIndexEntries(pathIndex, newPath, shortestPath);
       }
 
@@ -149,7 +167,7 @@ public class App {
 
         int node = path.get(pair.left);
         path.put(pair.left, pair.right);
-	int count = 0;
+	    int count = 0;
         while(node != pair.right) {
           count++;
           node = path.remove(node);
@@ -177,20 +195,21 @@ public class App {
         pathIndex.put(new Pair<Integer, Integer>(pair.left, pair.right), piList);
 
         // copy dest row
-        List<ShortestPath> list = rows.get(pair.right);
-        for(ShortestPath sp : list) {
-          if(!sp.path.containsKey(pair.left)) {
-            Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);        
-            newPath.put(pair.left, pair.right);
-            ShortestPath newShortestPath = new ShortestPath(pair.left, sp.last, sp.value + 1, newPath);
-            shortestPaths.put(new Pair<Integer, Integer>(pair.left, sp.last), newShortestPath);
-            
-            // update path index
-            addPathIndexEntries(pathIndex, newPath, newShortestPath);
+        if(rows.containsKey(pair.right)) {
+          List<ShortestPath> list = rows.get(pair.right);
+          for (ShortestPath sp : list) {
+            if (!sp.path.containsKey(pair.left)) {
+              Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
+              newPath.put(pair.left, pair.right);
+              ShortestPath newShortestPath = new ShortestPath(pair.left, sp.last, sp.value + 1, newPath);
+              shortestPaths.put(new Pair<Integer, Integer>(pair.left, sp.last), newShortestPath);
 
+              // update path index
+              addPathIndexEntries(pathIndex, newPath, newShortestPath);
+
+            }
           }
         }
-        	
 
       }
 
