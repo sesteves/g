@@ -73,9 +73,9 @@ public class App {
   }
 
 
-  private static void addPathIndexEntries(Map<Pair<Integer, Integer>, List<ShortestPath>> pathIndex,
-                                          Map<Integer, Integer> path, ShortestPath shortestPath) {
+  private static void addPathIndexEntries(ShortestPath shortestPath) {
 
+    Map<Integer, Integer> path = shortestPath.path;
     for(Integer orig : path.keySet()) {
       int n = orig;
       while(true) {
@@ -135,7 +135,7 @@ public class App {
         column.add(shortestPath);
         columns.put(pair.right, column);
 
-        addPathIndexEntries(pathIndex, newPath, shortestPath);
+        addPathIndexEntries(shortestPath);
       }
 
       searchShortestPath(origNode, destNode, newPath, distance);
@@ -205,7 +205,7 @@ public class App {
               shortestPaths.put(new Pair<Integer, Integer>(pair.left, sp.last), newShortestPath);
 
               // update path index
-              addPathIndexEntries(pathIndex, newPath, newShortestPath);
+              addPathIndexEntries(newShortestPath);
 
             }
           }
@@ -303,6 +303,8 @@ public class App {
     Map<Integer, Integer> path = new HashMap<Integer, Integer>();
 
     public ShortestPath(int head, int last, int value, Map<Integer, Integer> path) {
+      this.head = head;
+      this.last = last;
       this.value = value;
       this.path = path;
     }
@@ -315,7 +317,7 @@ public class App {
         sb.append(entry.getKey() + " : " + entry.getValue() + "\n");    
       }
 
-      return value + " :: " + sb.toString();
+      return "size: " + value + ", path: " + sb.toString();
     }
   }
 
