@@ -262,6 +262,66 @@ public class App {
     }
 
 
+  private static ShortestPath searchAlternativeSubPath(int orig, int dest) {
+
+    ShortestPath minShortestPath = null;
+    List<Integer> list = graph.get(orig);
+    for(Integer node : list) {
+      Pair<Integer, Integer> pair = new Pair<Integer, Integer>(node, dest);
+
+      ShortestPath sp = null;
+      shortestPaths.containsKey(pair)
+        sp = shortestPaths.get(pair);
+      else
+        continue;
+
+      if(minShortestPath == null || sp.value < minShortestPath.value) {
+        minShortestPath = sp;
+      }
+    }
+
+    return minShortestPath;
+  }
+
+  private static void processDelete(Pair<Integer, Integer> pair) {
+
+
+    if(pathIndex.containsKey(pair)) {
+
+      // update graph
+      List<>  = graph.get(pair.left);
+
+
+      List<ShortestPath> list = pathIndex.remove(pair);
+      for(ShortestPath sp : list) {
+
+        // TODO: check if it is dirty
+
+        // remove edge
+        sp.path.remove(pair.left);
+
+        ShortestPath alternativeSp = searchAlternativeSubPath(pair.left, pair.right);
+        // if there is no alternative
+        if(alternativeSp == null) {
+
+
+        } else {
+
+
+
+        }
+
+
+
+      }
+
+
+    }
+
+
+
+  }
+
 
 /*
     // check if both edge's nodes do not exist
