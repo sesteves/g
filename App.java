@@ -234,7 +234,7 @@ public class App {
             Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
             newPath.put(pair.left, pair.right);
             ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
-            shortestPaths.put(new Pair<Integer, Integer>(pair.left, sp.last), newShortestPath);
+            shortestPaths.put(new Pair<Integer, Integer>(sp.head, pair.right), newShortestPath);
 
             // update path index
             addPathIndexEntries(newShortestPath);
