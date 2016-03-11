@@ -180,8 +180,8 @@ public class App {
 
     } else {
 
-      // if both vertices already exist
-      if(graph.containsKey(pair.left) && graph.containsKey(pair.right)) {
+      // if right node exists
+      if(graph.containsKey(pair.right)) {
 
         // add new edge to shortest paths
         Map<Integer, Integer> path = new HashMap<Integer, Integer>();
@@ -198,7 +198,7 @@ public class App {
         if(rows.containsKey(pair.right)) {
           List<ShortestPath> list = rows.get(pair.right);
           for (ShortestPath sp : list) {
-            if (!sp.path.containsKey(pair.left)) {
+            if (!graph.containsKey(pair.left) || (!sp.path.containsKey(pair.left) && sp.last != pair.left)) {
               Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
               newPath.put(pair.left, pair.right);
               ShortestPath newShortestPath = new ShortestPath(pair.left, sp.last, sp.value + 1, newPath);
@@ -206,9 +206,14 @@ public class App {
 
               // update path index
               addPathIndexEntries(newShortestPath);
-
             }
           }
+        }
+
+        if(!graph.containsKey(pair.left)) {
+          List<Integer> list = new ArrayList<Integer>();
+          list.add(pair.right);
+          graph.put(pair.left, list);
         }
 
       }
