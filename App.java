@@ -193,8 +193,8 @@ public class App {
     // if pathIndex contains pair it means that both nodes already exist and that pair represents a shortcut
     if (pathIndex.containsKey(pair)) { // this should check for dirty nodes
 
+      List<ShortestPath> newSps = new ArrayList<ShortestPath>();
       List<ShortestPath> list = pathIndex.get(pair);
-
       for (ShortestPath sp : list) {
 
         // copy shortestPath
@@ -225,12 +225,14 @@ public class App {
         else
           paths.add(index, newSp);
 
-        // add to pathIndex
-        addPathIndexEntries(newSp);
+        newSps.add(newSp);
 
         // TODO: necessary to update rows and columns? NO
-
       }
+
+      // add to pathIndex
+      for(ShortestPath sp : newSps)
+        addPathIndexEntries(sp);
 
       // add to graph
       graph.get(pair.left).add(pair.right);
