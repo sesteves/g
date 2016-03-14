@@ -244,14 +244,14 @@ public class App {
       path.put(pair.left, pair.right);
       ShortestPath newSp = new ShortestPath(pair.left, pair.right, 1, path);
 
-      // List<ShortestPath> piList = new ArrayList<ShortestPath>();
-      // piList.add(newSp);
+      List<ShortestPath> piList = new ArrayList<ShortestPath>();
+      piList.add(newSp);
 
       List<ShortestPath> paths = new ArrayList<ShortestPath>();
       paths.add(newSp);
 
       shortestPaths.put(new Pair<Integer, Integer>(pair.left, pair.right), paths);
-      pathIndex.put(new Pair<Integer, Integer>(pair.left, pair.right), paths);
+      pathIndex.put(new Pair<Integer, Integer>(pair.left, pair.right), piList);
 
       updateRowsAndColumns(pair.left, pair.right, paths);
 
@@ -291,11 +291,8 @@ public class App {
           List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
           for (ShortestPath sp : lSp) {
 
-
             // FIXME confirm condition
             if (!sp.path.containsKey(pair.right) && sp.head != pair.right) {
-
-
 
               Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
               newPath.put(pair.left, pair.right);
