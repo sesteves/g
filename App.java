@@ -291,7 +291,10 @@ public class App {
           List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
           for (ShortestPath sp : lSp) {
 
-            if (!sp.path.containsKey(pair.left) && sp.last != pair.left) {
+            if (!sp.path.containsKey(pair.right) && sp.head != pair.right) {
+
+
+
               Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
               newPath.put(pair.left, pair.right);
               ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
