@@ -291,6 +291,8 @@ public class App {
           List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
           for (ShortestPath sp : lSp) {
 
+
+            // FIXME confirm condition
             if (!sp.path.containsKey(pair.right) && sp.head != pair.right) {
 
 
