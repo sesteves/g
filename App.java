@@ -9,11 +9,13 @@ public class App {
 
   static Map<Integer, List<Integer>> graph = new TreeMap<Integer, List<Integer>>();
 
-  static Map<Pair<Integer, Integer>, ShortestPath> shortestPaths = new HashMap<Pair<Integer, Integer>, ShortestPath>();
-  static Map<Integer, List<ShortestPath>> rows = new HashMap<Integer, List<ShortestPath>>();
-  static Map<Integer, List<ShortestPath>> columns = new HashMap<Integer, List<ShortestPath>>();
+  static Map<Pair<Integer, Integer>, List<ShortestPath>> shortestPaths =
+          new HashMap<Pair<Integer, Integer>, List<ShortestPath>>();
+  static Map<Integer, List<List<ShortestPath>>> rows = new HashMap<Integer, List<List<ShortestPath>>>();
+  static Map<Integer, List<List<ShortestPath>>> columns = new HashMap<Integer, List<List<ShortestPath>>>();
 
-  static Map<Pair<Integer, Integer>, List<ShortestPath>> pathIndex = new HashMap<Pair<Integer, Integer>, List<ShortestPath>>();
+  static Map<Pair<Integer, Integer>, List<ShortestPath>> pathIndex =
+          new HashMap<Pair<Integer, Integer>, List<ShortestPath>>();
 
 
   private static Map<Integer, List<Integer>> readGraph(BufferedReader in) {
@@ -69,7 +71,26 @@ public class App {
 
     for(Integer node : graph.keySet())
       searchShortestPath(node, node, new HashMap<Integer, Integer>(), 0);
-  
+
+    // update rows and columns
+    for(Map.Entry<Pair<Integer, Integer>, List<ShortestPath>> entry : shortestPaths.entrySet()) {
+      Pair<Integer, Integer> pair = entry.getKey();
+
+      List<List<ShortestPath>> list;
+      if(rows.containsKey(pair.left))
+        list = rows.get(pair.left);
+      else
+        list = new ArrayList<List<ShortestPath>>();
+      list.add(entry.getValue());
+      rows.put(pair.left, list);
+
+      if(columns.containsKey(pair.right))
+        list = columns.get(pair.right);
+      else
+        list = new ArrayList<List<ShortestPath>>();
+      list.add(entry.getValue());
+      columns.put(pair.right, list);
+    }
   }
 
 
@@ -96,25 +117,24 @@ public class App {
 
   }
 
-  private static void updateRowsAndColumns(ShortestPath shortestPath) {
+  private static void updateRowsAndColumns(int orig, int dest, List<ShortestPath> paths) {
     // update rows
-    List<ShortestPath> row;
-    if(rows.containsKey(shortestPath.head))
-      row = rows.get(shortestPath.head);
+    List<List<ShortestPath>> row;
+    if(rows.containsKey(orig))
+      row = rows.get(orig);
     else
-      row = new ArrayList<ShortestPath>();
-    row.add(shortestPath);
-    rows.put(shortestPath.head, row);
+      row = new ArrayList<List<ShortestPath>>();
+    row.add(paths);
+    rows.put(orig, row);
 
     // update columns
-    List<ShortestPath> column;
-    if(columns.containsKey(shortestPath.last))
-      column = columns.get(shortestPath.last);
+    List<List<ShortestPath>> column;
+    if(columns.containsKey(dest))
+      column = columns.get(dest);
     else
-      column = new ArrayList<ShortestPath>();
-    column.add(shortestPath);
-    columns.put(shortestPath.last, column);
-
+      column = new ArrayList<List<ShortestPath>>();
+    column.add(paths);
+    columns.put(dest, column);
   }
 
   private static void searchShortestPath(int origNode, int node, Map<Integer, Integer> path, int distance) {
@@ -122,7 +142,7 @@ public class App {
     List<Integer> destNodes; 
     if(graph.containsKey(node))
       destNodes = graph.get(node);
-    else    
+    else
       return;    
 
     distance += 1;
@@ -132,15 +152,24 @@ public class App {
      
       Pair<Integer, Integer> pair = new Pair<Integer, Integer>(origNode, destNode);
       Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(path);
-      if(!shortestPaths.containsKey(pair) || shortestPaths.get(pair).value > distance) {        
-        newPath.put(node, destNode);
-        ShortestPath shortestPath = new ShortestPath(pair.left, pair.right, distance, newPath);
-        shortestPaths.put(pair, shortestPath);
+      newPath.put(node, destNode);
+      ShortestPath shortestPath = new ShortestPath(pair.left, pair.right, distance, newPath);
+      addPathIndexEntries(shortestPath);
 
-        updateRowsAndColumns(shortestPath);
+      List<ShortestPath> paths;
+      if(shortestPaths.containsKey(pair))
+        paths = shortestPaths.get(pair);
+      else
+        paths = new ArrayList<ShortestPath>();
 
-        addPathIndexEntries(shortestPath);
-      }
+      int index = 0;
+      for(int i = 0; i < paths.size(); i++)
+        if(distance < paths.get(i).value) {
+          index = i;
+          break;
+        }
+      paths.add(index, shortestPath);
+      shortestPaths.put(pair, paths);
 
       searchShortestPath(origNode, destNode, newPath, distance);
     }
@@ -150,33 +179,57 @@ public class App {
   private static int processQuery(Pair<Integer, Integer> pair) {
     if(pair.left == pair.right)
       return 0;
-    ShortestPath sp = shortestPaths.get(pair);
-    return sp == null ? -1 : sp.value;
+    List<ShortestPath> paths = shortestPaths.get(pair);
+    return paths == null ? -1 : paths.get(0).value;
   }
 
   private static void processAdd(Pair<Integer, Integer> pair) {
 
     // check if edge already exists   
-    if(shortestPaths.containsKey(pair) && shortestPaths.get(pair).value == 1) {
+    if (shortestPaths.containsKey(pair) && shortestPaths.get(pair).get(0).value == 1) {
       return;
     }
 
     // if pathIndex contains pair it means that both nodes already exist and that pair represents a shortcut
-    if(pathIndex.containsKey(pair)) { // this should check for dirty nodes
+    if (pathIndex.containsKey(pair)) { // this should check for dirty nodes
 
       List<ShortestPath> list = pathIndex.get(pair);
 
-      for(ShortestPath sp : list) {
-        Map<Integer, Integer> path = sp.path;
+      for (ShortestPath sp : list) {
+
+        // copy shortestPath
+        ShortestPath newSp = new ShortestPath(sp);
+
+        Map<Integer, Integer> path = newSp.path;
 
         int node = path.get(pair.left);
         path.put(pair.left, pair.right);
-	    int count = 0;
-        while(node != pair.right) {
+        int count = 0;
+        while (node != pair.right) {
           count++;
           node = path.remove(node);
         }
-        sp.value -= count; 
+        newSp.value -= count;
+
+        // add new node to shortestPaths
+        List<ShortestPath> paths = shortestPaths.get(newSp.pair);
+        int index = -1;
+        for (int i = 0; i < paths.size(); i++) {
+          if (newSp.value < paths.get(i).value) {
+            index = i;
+            break;
+          }
+        }
+        if (index < 0)
+          paths.add(newSp);
+        else
+          paths.add(index, newSp);
+
+        // add to pathIndex
+        addPathIndexEntries(newSp);
+
+        // TODO: necessary to update rows and columns? NO
+
       }
 
       // add to graph
@@ -192,60 +245,76 @@ public class App {
       List<ShortestPath> piList = new ArrayList<ShortestPath>();
       piList.add(newSp);
 
-      shortestPaths.put(new Pair<Integer, Integer>(pair.left, pair.right), newSp) ;
+      List<ShortestPath> paths = new ArrayList<ShortestPath>();
+      paths.add(newSp);
+
+      shortestPaths.put(new Pair<Integer, Integer>(pair.left, pair.right), paths);
       pathIndex.put(new Pair<Integer, Integer>(pair.left, pair.right), piList);
 
-      updateRowsAndColumns(newSp);
+      updateRowsAndColumns(pair.left, pair.right, paths);
 
       // if right node exists
-      if(graph.containsKey(pair.right)) {
+      if (graph.containsKey(pair.right)) {
 
         // copy dest row
-        if(rows.containsKey(pair.right)) {
-          List<ShortestPath> list = rows.get(pair.right);
-          for (ShortestPath sp : list) {
-            if (!graph.containsKey(pair.left) || (!sp.path.containsKey(pair.left) && sp.last != pair.left)) {
-              Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
-              newPath.put(pair.left, pair.right);
-              ShortestPath newShortestPath = new ShortestPath(pair.left, sp.last, sp.value + 1, newPath);
-              shortestPaths.put(new Pair<Integer, Integer>(pair.left, sp.last), newShortestPath);
+        if (rows.containsKey(pair.right)) {
+          List<List<ShortestPath>> list = rows.get(pair.right);
+          for (List<ShortestPath> lSp : list) {
 
-              // update path index
-              addPathIndexEntries(newShortestPath);
+            List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
+            for(ShortestPath sp : lSp) {
 
-              updateRowsAndColumns(newShortestPath);
+              if (!graph.containsKey(pair.left) || !sp.path.containsKey(pair.left) && sp.last != pair.left) {
+                Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
+                newPath.put(pair.left, pair.right);
+                ShortestPath newShortestPath = new ShortestPath(pair.left, sp.last, sp.value + 1, newPath);
+                newLSP.add(newShortestPath);
+
+                // update path index
+                addPathIndexEntries(newShortestPath);
+
+              }
+
             }
+            shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
+
+            // update rows and columns
+            updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
           }
         }
 
         // update graph
-        if(!graph.containsKey(pair.left)) {
+        if (!graph.containsKey(pair.left)) {
           List<Integer> list = new ArrayList<Integer>();
           list.add(pair.right);
           graph.put(pair.left, list);
         }
 
-      } else if(graph.containsKey(pair.left)) {
+      } else if (graph.containsKey(pair.left)) {
 
         // copy origin column
-        if(columns.containsKey(pair.left)) {
-          List<ShortestPath> list = columns.get(pair.left);
-          for(ShortestPath sp : list) {
-            Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
-            newPath.put(pair.left, pair.right);
-            ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
-            shortestPaths.put(new Pair<Integer, Integer>(sp.head, pair.right), newShortestPath);
+        if (columns.containsKey(pair.left)) {
+          List<List<ShortestPath>> list = columns.get(pair.left);
+          for (List<ShortestPath> lSp : list) {
 
-            // update path index
-            addPathIndexEntries(newShortestPath);
+            List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
+            for(ShortestPath sp : lSp) {
+              Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
+              newPath.put(pair.left, pair.right);
+              ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
+              newLSP.add(newShortestPath);
 
-            updateRowsAndColumns(newShortestPath);
+              // update path index
+              addPathIndexEntries(newShortestPath);
+            }
+            shortestPaths.put(new Pair<Integer, Integer>(lSp.get(0).head, pair.right), newLSP);
+            updateRowsAndColumns(lSp.get(0).head, pair.right, newLSP);
           }
         }
 
         // update graph
         List<Integer> list;
-        if(graph.containsKey(pair.left))
+        if (graph.containsKey(pair.left))
           list = graph.get(pair.left);
         else
           list = new ArrayList<Integer>();
@@ -257,98 +326,48 @@ public class App {
         List<Integer> list = new ArrayList<Integer>();
         list.add(pair.right);
         graph.put(pair.left, list);
-      }
 
-    }
+        path = new HashMap<Integer, Integer>();
+        path.put(pair.left, pair.right);
+        ShortestPath sp = new ShortestPath(pair.left, pair.right, 1, path);
+        List<ShortestPath> lSp = new ArrayList<ShortestPath>();
+        lSp.add(sp);
+        shortestPaths.put(sp.pair, lSp);
 
+        // update path index
+        lSp = new ArrayList<ShortestPath>();
+        lSp.add(sp);
+        pathIndex.put(sp.pair, lSp);
 
-  private static ShortestPath searchAlternativeSubPath(int orig, int dest) {
-
-    ShortestPath minShortestPath = null;
-    List<Integer> list = graph.get(orig);
-    for(Integer node : list) {
-      Pair<Integer, Integer> pair = new Pair<Integer, Integer>(node, dest);
-
-      ShortestPath sp = null;
-      shortestPaths.containsKey(pair)
-        sp = shortestPaths.get(pair);
-      else
-        continue;
-
-      if(minShortestPath == null || sp.value < minShortestPath.value) {
-        minShortestPath = sp;
+        // update rows and columns
+        updateRowsAndColumns(pair.left, pair.right, lSp);
       }
     }
-
-    return minShortestPath;
   }
 
-  private static void processDelete(Pair<Integer, Integer> pair) {
 
+  private static void processDelete(Pair<Integer, Integer> pair) {
 
     if(pathIndex.containsKey(pair)) {
 
       // update graph
-      List<>  = graph.get(pair.left);
-
+      List<Integer> succNodes = graph.get(pair.left);
+      succNodes.remove(pair.right);
+      if(succNodes.size() == 0)
+        graph.remove(pair.left);
 
       List<ShortestPath> list = pathIndex.remove(pair);
       for(ShortestPath sp : list) {
+        Pair<Integer, Integer> p = new Pair<Integer, Integer>(sp.head, sp.last);
+        List<ShortestPath> paths = shortestPaths.get(p);
+        paths.remove(sp);
+        if(paths.size() == 0)
+          shortestPaths.remove(p);
 
-        // TODO: check if it is dirty
-
-        // remove edge
-        sp.path.remove(pair.left);
-
-        ShortestPath alternativeSp = searchAlternativeSubPath(pair.left, pair.right);
-        // if there is no alternative
-        if(alternativeSp == null) {
-
-
-        } else {
-
-
-
-        }
-
-
+        // TODO update rows and columns
 
       }
-
-
     }
-
-
-
-  }
-
-
-/*
-    // check if both edge's nodes do not exist
-    if(!graph.containsKey(pair.left) && !graph.containsKey(pair.right)) {
-
-      // insert in shortestPaths
-
-      shortestPaths.put();
-     
-      // insert in path index
-
-    }
-
-    if(!graph.containsKey(pair.left) && graph.containsKey(pair.right) || !pathIndex.containsKey(pair)) {
-
-    }
-
-
-    if(graph.containsKey(pair.left) && !graph.containsKey(pair.right)) {
-
-
-    }
-*/
-  }
-
-  private static void processDelete() {
-
   }
 
   private static void readBatches()  {
@@ -393,9 +412,10 @@ public class App {
 
     populateShortestPathTable();
 
+
     // debug
-    for(Map.Entry<Pair<Integer, Integer>,ShortestPath> entry : shortestPaths.entrySet())
-      System.out.println("key: " + entry.getKey() + " :: value: " + entry.getValue());
+    for(Map.Entry<Pair<Integer, Integer>,List<ShortestPath>> entry : shortestPaths.entrySet())
+      System.out.println("key: " + entry.getKey() + " :: value: " + entry.getValue().get(0));
 
     readBatches();
   }
@@ -403,14 +423,41 @@ public class App {
 
   private static class ShortestPath {
     int head, last;
+    Pair<Integer, Integer> pair;
     int value;
     Map<Integer, Integer> path = new HashMap<Integer, Integer>();
+    UUID id = UUID.randomUUID();
 
     public ShortestPath(int head, int last, int value, Map<Integer, Integer> path) {
       this.head = head;
       this.last = last;
+      this.pair = new Pair<Integer, Integer>(head, last);
       this.value = value;
       this.path = path;
+    }
+
+    public ShortestPath(ShortestPath sp) {
+      this.head = sp.head;
+      this.last = sp.last;
+      this.pair = new Pair<Integer, Integer>(head, last);
+      this.value = sp.value;
+      this.path = new HashMap<Integer, Integer>(sp.path);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      ShortestPath that = (ShortestPath) o;
+
+      return id.equals(that.id);
+
+    }
+
+    @Override
+    public int hashCode() {
+      return id.hashCode();
     }
 
     @Override
