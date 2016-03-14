@@ -374,6 +374,13 @@ public class App {
 
   private static void readBatches()  {
 
+    // debug
+    for(Map.Entry<Integer, List<List<ShortestPath>>> entry : rows.entrySet())
+      for(List<ShortestPath> list : entry.getValue()) {
+        ShortestPath sp = list.get(0);
+        System.out.println("(" + sp.head + ", " + sp.last + ", " + sp.value + ")");
+      }
+
     try {
       String s;
       while ((s = in.readLine()) != null && s.length() != 0) {
