@@ -244,19 +244,19 @@ public class App {
       path.put(pair.left, pair.right);
       ShortestPath newSp = new ShortestPath(pair.left, pair.right, 1, path);
 
-      List<ShortestPath> piList = new ArrayList<ShortestPath>();
-      piList.add(newSp);
+      // List<ShortestPath> piList = new ArrayList<ShortestPath>();
+      // piList.add(newSp);
 
       List<ShortestPath> paths = new ArrayList<ShortestPath>();
       paths.add(newSp);
 
       shortestPaths.put(new Pair<Integer, Integer>(pair.left, pair.right), paths);
-      pathIndex.put(new Pair<Integer, Integer>(pair.left, pair.right), piList);
+      pathIndex.put(new Pair<Integer, Integer>(pair.left, pair.right), paths);
 
       updateRowsAndColumns(pair.left, pair.right, paths);
 
       // if right node exists
-      if (graph.containsKey(pair.right)) {
+      if (graph.containsKey(pair.right) && !graph.containsKey(pair.left)) {
 
         // copy dest row
         if (rows.containsKey(pair.right)) {
@@ -265,7 +265,7 @@ public class App {
 
             List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
             for(ShortestPath sp : lSp) {
-              if (!graph.containsKey(pair.left) || !sp.path.containsKey(pair.left) && sp.last != pair.left) {
+              if (!sp.path.containsKey(pair.left) && sp.last != pair.left) {
                 Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
                 newPath.put(pair.left, pair.right);
                 ShortestPath newShortestPath = new ShortestPath(pair.left, sp.last, sp.value + 1, newPath);
@@ -280,7 +280,6 @@ public class App {
               shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
 
               // update rows and columns
-              // FIXME inserting empty list
               updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
             }
           }
@@ -329,7 +328,9 @@ public class App {
         List<Integer> list = new ArrayList<Integer>();
         list.add(pair.right);
         graph.put(pair.left, list);
+        graph.put(pair.right, new ArrayList<Integer>());
 
+        // update shortest path
         path = new HashMap<Integer, Integer>();
         path.put(pair.left, pair.right);
         ShortestPath sp = new ShortestPath(pair.left, pair.right, 1, path);
@@ -376,7 +377,6 @@ public class App {
 
         }
         // TODO update rows and columns
-
       }
       for(ShortestPath sp : toRemove)
         pathIndex.remove(sp);
