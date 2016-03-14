@@ -290,13 +290,16 @@ public class App {
 
           List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
           for (ShortestPath sp : lSp) {
-            Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
-            newPath.put(pair.left, pair.right);
-            ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
-            newLSP.add(newShortestPath);
 
-            // update path index
-            addPathIndexEntries(newShortestPath);
+            if (!sp.path.containsKey(pair.left) && sp.last != pair.left) {
+              Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
+              newPath.put(pair.left, pair.right);
+              ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
+              newLSP.add(newShortestPath);
+
+              // update path index
+              addPathIndexEntries(newShortestPath);
+            }
           }
           if(!newLSP.isEmpty()) {
             shortestPaths.put(new Pair<Integer, Integer>(lSp.get(0).head, pair.right), newLSP);
