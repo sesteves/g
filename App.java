@@ -1,6 +1,6 @@
 import java.io.*;
 import java.util.*;
-
+import java.util.ArrayList;
 
 
 public class App {
@@ -359,12 +359,16 @@ public class App {
       if(succNodes.size() == 0)
         graph.remove(pair.left);
 
-      List<ShortestPath> list = pathIndex.remove(pair);
+      // TODO mark as dirty shortestPath that contain edge 2->4
+      // or use hash by shortPathId
+      List<ShortestPath> toRemove = new ArrayList<ShortestPath>();
+      List<ShortestPath> list = pathIndex.get(pair);
       for(ShortestPath sp : list) {
 
         int next = sp.path.get(pair.left);
         if(next == pair.right) {
 
+          toRemove.add(sp);
           List<ShortestPath> paths = shortestPaths.get(sp.pair);
           paths.remove(sp);
           if (paths.size() == 0)
@@ -374,6 +378,8 @@ public class App {
         // TODO update rows and columns
 
       }
+      for(ShortestPath sp : toRemove)
+        pathIndex.remove(sp);
     }
   }
 
@@ -402,6 +408,9 @@ public class App {
             processAdd(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
             break;
           case 'D':
+            elements = s.substring(2).split(" ");
+            processDelete(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
+            break;
         }
 
       }
