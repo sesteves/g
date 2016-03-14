@@ -281,6 +281,7 @@ public class App {
             shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
 
             // update rows and columns
+            // FIXME inserting empty list
             updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
           }
         }
