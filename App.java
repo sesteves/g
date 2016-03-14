@@ -265,7 +265,6 @@ public class App {
 
             List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
             for(ShortestPath sp : lSp) {
-
               if (!graph.containsKey(pair.left) || !sp.path.containsKey(pair.left) && sp.last != pair.left) {
                 Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
                 newPath.put(pair.left, pair.right);
@@ -276,13 +275,14 @@ public class App {
                 addPathIndexEntries(newShortestPath);
 
               }
-
             }
-            shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
+            if(!newLSP.isEmpty()) {
+              shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
 
-            // update rows and columns
-            // FIXME inserting empty list
-            updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
+              // update rows and columns
+              // FIXME inserting empty list
+              updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
+            }
           }
         }
 
@@ -361,12 +361,16 @@ public class App {
 
       List<ShortestPath> list = pathIndex.remove(pair);
       for(ShortestPath sp : list) {
-        Pair<Integer, Integer> p = new Pair<Integer, Integer>(sp.head, sp.last);
-        List<ShortestPath> paths = shortestPaths.get(p);
-        paths.remove(sp);
-        if(paths.size() == 0)
-          shortestPaths.remove(p);
 
+        int next = sp.path.get(pair.left);
+        if(next == pair.right) {
+
+          List<ShortestPath> paths = shortestPaths.get(sp.pair);
+          paths.remove(sp);
+          if (paths.size() == 0)
+            shortestPaths.remove(sp.pair);
+
+        }
         // TODO update rows and columns
 
       }
