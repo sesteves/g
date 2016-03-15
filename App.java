@@ -284,15 +284,14 @@ public class App {
                   ShortestPath newShortestPath = new ShortestPath(columnSP.head, rowSP.last,
                           columnSP.value + rowSP.value + 1, newPath);
 
-                  //newLSP.add(newShortestPath);
 
                   // update shortest paths
                   List<ShortestPath> list;
                   if(shortestPaths.containsKey(newShortestPath.pair)) {
                     list = shortestPaths.get(newShortestPath.pair);
-                    int index = -1;
-                    for (int i = 0; i < paths.size(); i++) {
-                      if (newShortestPath.value < paths.get(i).value) {
+                    int index = list.size();
+                    for (int i = 0; i < list.size(); i++) {
+                      if (newShortestPath.value < list.get(i).value) {
                         index = i;
                         break;
                       }
@@ -304,6 +303,7 @@ public class App {
                     shortestPaths.put(newShortestPath.pair, list);
                   }
 
+                  // TODO possibly adding duplicates
                   updateRowsAndColumns(newShortestPath.head, newShortestPath.last, list);
 
                   // update path index
@@ -314,17 +314,6 @@ public class App {
             }
           }
         }
-//        if (!newLSP.isEmpty()) {
-//          shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
-//
-//          // update rows and columns
-//          updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
-//        }
-
-
-
-
-
       }
 
       // copy dest row
@@ -356,8 +345,8 @@ public class App {
 
       // copy origin column
       if (columns.containsKey(pair.left)) {
-        List<List<ShortestPath>> list = columns.get(pair.left);
-        for (List<ShortestPath> lSp : list) {
+        List<List<ShortestPath>> listColumn = columns.get(pair.left);
+        for (List<ShortestPath> lSp : listColumn) {
 
           List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
           for (ShortestPath sp : lSp) {
@@ -368,16 +357,37 @@ public class App {
               Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
               newPath.put(pair.left, pair.right);
               ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
-              newLSP.add(newShortestPath);
+
+              // newLSP.add(newShortestPath);
+
+              // update shortest path
+              List<ShortestPath> list;
+              if(shortestPaths.containsKey(newShortestPath.pair)) {
+                list = shortestPaths.get(newShortestPath.pair);
+                int index = list.size();
+                for (int i = 0; i < list.size(); i++) {
+                  if (newShortestPath.value < list.get(i).value) {
+                    index = i;
+                    break;
+                  }
+                }
+                list.add(index, newShortestPath);
+              } else {
+                list = new ArrayList<ShortestPath>();
+                list.add(newShortestPath);
+                shortestPaths.put(newShortestPath.pair, list);
+              }
+              updateRowsAndColumns(newShortestPath.head, newShortestPath.last, list);
+
 
               // update path index
               addPathIndexEntries(newShortestPath);
             }
           }
-          if(!newLSP.isEmpty()) {
-            shortestPaths.put(new Pair<Integer, Integer>(lSp.get(0).head, pair.right), newLSP);
-            updateRowsAndColumns(lSp.get(0).head, pair.right, newLSP);
-          }
+//          if(!newLSP.isEmpty()) {
+//            shortestPaths.put(new Pair<Integer, Integer>(lSp.get(0).head, pair.right), newLSP);
+//            updateRowsAndColumns(lSp.get(0).head, pair.right, newLSP);
+//          }
         }
       }
 
@@ -527,14 +537,15 @@ public class App {
 
   private static void readBatches()  {
 
-    // debug
-    for(Map.Entry<Integer, List<List<ShortestPath>>> entry : rows.entrySet())
-      for(List<ShortestPath> list : entry.getValue()) {
-        ShortestPath sp = list.get(0);
-        System.out.println("(" + sp.head + ", " + sp.last + ", " + sp.value + ")");
-      }
+//    // debug
+//    for(Map.Entry<Integer, List<List<ShortestPath>>> entry : rows.entrySet())
+//      for(List<ShortestPath> list : entry.getValue()) {
+//        ShortestPath sp = list.get(0);
+//        System.out.println("(" + sp.head + ", " + sp.last + ", " + sp.value + ")");
+//      }
 
     try {
+      System.out.println("R");
       String s;
       while ((s = in.readLine()) != null && s.length() != 0) {
 
