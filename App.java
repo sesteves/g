@@ -200,9 +200,9 @@ public class App {
       list = new ArrayList<ShortestPath>();
       list.add(sp);
       shortestPaths.put(sp.pair, list);
+      // TODO possibly adding duplicates
+      updateRowsAndColumns(sp.head, sp.last, list);
     }
-    // TODO possibly adding duplicates
-    updateRowsAndColumns(sp.head, sp.last, list);
   }
 
   private static void processAdd(Pair<Integer, Integer> pair) {
@@ -549,7 +549,7 @@ public class App {
   public static void main(String[] args) {
 
     readGraph(in);
-
+/*
     // debug
     for(Map.Entry<Integer, List<Integer>> entry : graph.entrySet()) {
       System.out.print(entry.getKey() + " : ");
@@ -558,13 +558,14 @@ public class App {
       }
       System.out.println();
     }
-
+*/
     populateShortestPathTable();
 
-
+/*
     // debug
     for(Map.Entry<Pair<Integer, Integer>,List<ShortestPath>> entry : shortestPaths.entrySet())
       System.out.println("key: " + entry.getKey() + " :: value: " + entry.getValue().get(0));
+*/
 
     readBatches();
   }
