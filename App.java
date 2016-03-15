@@ -199,7 +199,6 @@ public class App {
 
         // copy shortestPath
         ShortestPath newSp = new ShortestPath(sp);
-
         Map<Integer, Integer> path = newSp.path;
 
         int node = path.get(pair.left);
@@ -558,7 +557,7 @@ public class App {
 
       StringBuilder sb = new StringBuilder();
       for(Map.Entry<Integer,Integer> entry : path.entrySet()) {
-        sb.append(entry.getKey() + " : " + entry.getValue() + "\n");    
+        sb.append(entry.getKey() + " -> " + entry.getValue() + " - ");
       }
 
       return "size: " + value + ", path: " + sb.toString();
