@@ -183,6 +183,28 @@ public class App {
     return paths == null ? -1 : paths.get(0).value;
   }
 
+
+  private static void updateShortestPath(ShortestPath sp) {
+    List<ShortestPath> list;
+    if (shortestPaths.containsKey(sp.pair)) {
+      list = shortestPaths.get(sp.pair);
+      int index = list.size();
+      for (int i = 0; i < list.size(); i++) {
+        if (sp.value < list.get(i).value) {
+          index = i;
+          break;
+        }
+      }
+      list.add(index, sp);
+    } else {
+      list = new ArrayList<ShortestPath>();
+      list.add(sp);
+      shortestPaths.put(sp.pair, list);
+    }
+    // TODO possibly adding duplicates
+    updateRowsAndColumns(sp.head, sp.last, list);
+  }
+
   private static void processAdd(Pair<Integer, Integer> pair) {
 
     // check if edge already exists   
@@ -284,27 +306,8 @@ public class App {
                   ShortestPath newShortestPath = new ShortestPath(columnSP.head, rowSP.last,
                           columnSP.value + rowSP.value + 1, newPath);
 
-
                   // update shortest paths
-                  List<ShortestPath> list;
-                  if(shortestPaths.containsKey(newShortestPath.pair)) {
-                    list = shortestPaths.get(newShortestPath.pair);
-                    int index = list.size();
-                    for (int i = 0; i < list.size(); i++) {
-                      if (newShortestPath.value < list.get(i).value) {
-                        index = i;
-                        break;
-                      }
-                    }
-                    list.add(index, newShortestPath);
-                  } else {
-                    list = new ArrayList<ShortestPath>();
-                    list.add(newShortestPath);
-                    shortestPaths.put(newShortestPath.pair, list);
-                  }
-
-                  // TODO possibly adding duplicates
-                  updateRowsAndColumns(newShortestPath.head, newShortestPath.last, list);
+                  updateShortestPath(newShortestPath);
 
                   // update path index
                   addPathIndexEntries(newShortestPath);
@@ -320,26 +323,21 @@ public class App {
       if (rows.containsKey(pair.right)) {
         List<List<ShortestPath>> list = rows.get(pair.right);
         for (List<ShortestPath> lSp : list) {
-
-          List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
           for (ShortestPath sp : lSp) {
             if (!sp.path.containsKey(pair.left) && sp.last != pair.left) {
               Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(sp.path);
               newPath.put(pair.left, pair.right);
               ShortestPath newShortestPath = new ShortestPath(pair.left, sp.last, sp.value + 1, newPath);
-              newLSP.add(newShortestPath);
+
+              // update shortest paths
+              updateShortestPath(newShortestPath);
 
               // update path index
               addPathIndexEntries(newShortestPath);
 
             }
           }
-          if (!newLSP.isEmpty()) {
-            shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
 
-            // update rows and columns
-            updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
-          }
         }
       }
 
@@ -347,8 +345,6 @@ public class App {
       if (columns.containsKey(pair.left)) {
         List<List<ShortestPath>> listColumn = columns.get(pair.left);
         for (List<ShortestPath> lSp : listColumn) {
-
-          List<ShortestPath> newLSP = new ArrayList<ShortestPath>();
           for (ShortestPath sp : lSp) {
 
             // FIXME confirm condition
@@ -358,36 +354,13 @@ public class App {
               newPath.put(pair.left, pair.right);
               ShortestPath newShortestPath = new ShortestPath(sp.head, pair.right, sp.value + 1, newPath);
 
-              // newLSP.add(newShortestPath);
-
               // update shortest path
-              List<ShortestPath> list;
-              if(shortestPaths.containsKey(newShortestPath.pair)) {
-                list = shortestPaths.get(newShortestPath.pair);
-                int index = list.size();
-                for (int i = 0; i < list.size(); i++) {
-                  if (newShortestPath.value < list.get(i).value) {
-                    index = i;
-                    break;
-                  }
-                }
-                list.add(index, newShortestPath);
-              } else {
-                list = new ArrayList<ShortestPath>();
-                list.add(newShortestPath);
-                shortestPaths.put(newShortestPath.pair, list);
-              }
-              updateRowsAndColumns(newShortestPath.head, newShortestPath.last, list);
-
+              updateShortestPath(newShortestPath);
 
               // update path index
               addPathIndexEntries(newShortestPath);
             }
           }
-//          if(!newLSP.isEmpty()) {
-//            shortestPaths.put(new Pair<Integer, Integer>(lSp.get(0).head, pair.right), newLSP);
-//            updateRowsAndColumns(lSp.get(0).head, pair.right, newLSP);
-//          }
         }
       }
 
