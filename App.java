@@ -255,6 +255,78 @@ public class App {
       updateRowsAndColumns(pair.left, pair.right, paths);
 
 
+      // TODO optimize
+      if(rows.containsKey(pair.right) && columns.containsKey(pair.left)) {
+
+        List<List<ShortestPath>> listRows = rows.get(pair.right);
+        List<List<ShortestPath>> listColumns = columns.get(pair.left);
+
+        for(List<ShortestPath> columnPaths : listColumns) {
+          for (ShortestPath columnSP : columnPaths) {
+            for(List<ShortestPath> rowPaths : listRows) {
+              for(ShortestPath rowSP : rowPaths) {
+
+                // check for loop
+                // TODO optimize
+                Set<Integer> intersection = new HashSet<Integer>(columnSP.path.keySet());
+                intersection.add(columnSP.last);
+
+                Set<Integer> newRowSP = new HashSet<Integer>(rowSP.path.keySet());
+                newRowSP.add(rowSP.last);
+                intersection.retainAll(newRowSP);
+
+                if(intersection.isEmpty()) {
+
+                  Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(columnSP.path);
+                  newPath.putAll(rowSP.path);
+                  newPath.put(pair.left, pair.right);
+
+                  ShortestPath newShortestPath = new ShortestPath(columnSP.head, rowSP.last,
+                          columnSP.value + rowSP.value + 1, newPath);
+
+                  //newLSP.add(newShortestPath);
+
+                  // update shortest paths
+                  List<ShortestPath> list;
+                  if(shortestPaths.containsKey(newShortestPath.pair)) {
+                    list = shortestPaths.get(newShortestPath.pair);
+                    int index = -1;
+                    for (int i = 0; i < paths.size(); i++) {
+                      if (newShortestPath.value < paths.get(i).value) {
+                        index = i;
+                        break;
+                      }
+                    }
+                    list.add(index, newShortestPath);
+                  } else {
+                    list = new ArrayList<ShortestPath>();
+                    list.add(newShortestPath);
+                    shortestPaths.put(newShortestPath.pair, list);
+                  }
+
+                  updateRowsAndColumns(newShortestPath.head, newShortestPath.last, list);
+
+                  // update path index
+                  addPathIndexEntries(newShortestPath);
+
+                }
+              }
+            }
+          }
+        }
+//        if (!newLSP.isEmpty()) {
+//          shortestPaths.put(new Pair<Integer, Integer>(pair.left, lSp.get(0).last), newLSP);
+//
+//          // update rows and columns
+//          updateRowsAndColumns(pair.left, lSp.get(0).last, newLSP);
+//        }
+
+
+
+
+
+      }
+
       // copy dest row
       if (rows.containsKey(pair.right)) {
         List<List<ShortestPath>> list = rows.get(pair.right);
@@ -308,6 +380,7 @@ public class App {
           }
         }
       }
+
 
       // update graph
       List<Integer> list;
