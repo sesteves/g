@@ -190,53 +190,53 @@ public class App {
       return;
     }
 
-    // if pathIndex contains pair it means that both nodes already exist and that pair represents a shortcut
-    if (pathIndex.containsKey(pair)) { // this should check for dirty nodes
-
-      List<ShortestPath> newSps = new ArrayList<ShortestPath>();
-      List<ShortestPath> list = pathIndex.get(pair);
-      for (ShortestPath sp : list) {
-
-        // copy shortestPath
-        ShortestPath newSp = new ShortestPath(sp);
-        Map<Integer, Integer> path = newSp.path;
-
-        int node = path.get(pair.left);
-        path.put(pair.left, pair.right);
-        int count = 0;
-        while (node != pair.right) {
-          count++;
-          node = path.remove(node);
-        }
-        newSp.value -= count;
-
-        // add new node to shortestPaths
-        List<ShortestPath> paths = shortestPaths.get(newSp.pair);
-        int index = -1;
-        for (int i = 0; i < paths.size(); i++) {
-          if (newSp.value < paths.get(i).value) {
-            index = i;
-            break;
-          }
-        }
-        if (index < 0)
-          paths.add(newSp);
-        else
-          paths.add(index, newSp);
-
-        newSps.add(newSp);
-
-        // TODO: necessary to update rows and columns? NO
-      }
-
-      // add to pathIndex
-      for(ShortestPath sp : newSps)
-        addPathIndexEntries(sp);
-
-      // add to graph
-      graph.get(pair.left).add(pair.right);
-
-    } else {
+//    // if pathIndex contains pair it means that both nodes already exist and that pair represents a shortcut
+//    if (pathIndex.containsKey(pair)) { // this should check for dirty nodes
+//
+//      List<ShortestPath> newSps = new ArrayList<ShortestPath>();
+//      List<ShortestPath> list = pathIndex.get(pair);
+//      for (ShortestPath sp : list) {
+//
+//        // copy shortestPath
+//        ShortestPath newSp = new ShortestPath(sp);
+//        Map<Integer, Integer> path = newSp.path;
+//
+//        int node = path.get(pair.left);
+//        path.put(pair.left, pair.right);
+//        int count = 0;
+//        while (node != pair.right) {
+//          count++;
+//          node = path.remove(node);
+//        }
+//        newSp.value -= count;
+//
+//        // add new node to shortestPaths
+//        List<ShortestPath> paths = shortestPaths.get(newSp.pair);
+//        int index = -1;
+//        for (int i = 0; i < paths.size(); i++) {
+//          if (newSp.value < paths.get(i).value) {
+//            index = i;
+//            break;
+//          }
+//        }
+//        if (index < 0)
+//          paths.add(newSp);
+//        else
+//          paths.add(index, newSp);
+//
+//        newSps.add(newSp);
+//
+//        // TODO: necessary to update rows and columns? NO
+//      }
+//
+//      // add to pathIndex
+//      for(ShortestPath sp : newSps)
+//        addPathIndexEntries(sp);
+//
+//      // add to graph
+//      graph.get(pair.left).add(pair.right);
+//
+//    } else {
 
       // add new edge to shortest paths
       Map<Integer, Integer> path = new HashMap<Integer, Integer>();
@@ -321,7 +321,7 @@ public class App {
       }
 
 
-    }
+//    }
 
 
 //      // if right node exists
