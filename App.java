@@ -227,6 +227,8 @@ public class App {
       return;
     }
 
+    long startTick = System.currentTimeMillis();
+
     // add new edge to shortest paths
     Map<Integer, Integer> path = new HashMap<Integer, Integer>();
     path.put(pair.left, pair.right);
@@ -243,6 +245,9 @@ public class App {
 
     updateRowsAndColumns(pair.left, pair.right, paths);
 
+    System.err.println("Add new edge to shortest paths: " + (System.currentTimeMillis() - startTick));
+
+    startTick = System.currentTimeMillis();
 
     // TODO optimize
     if (rows.containsKey(pair.right) && columns.containsKey(pair.left)) {
@@ -285,7 +290,9 @@ public class App {
         }
       }
     }
+    System.err.println("Joinining paths: " + (System.currentTimeMillis() - startTick));
 
+    startTick = System.currentTimeMillis();
     // copy dest row
     if (rows.containsKey(pair.right)) {
       List<List<ShortestPath>> list = rows.get(pair.right);
@@ -307,7 +314,9 @@ public class App {
 
       }
     }
+    System.err.println("Copying dest row: " + (System.currentTimeMillis() - startTick));
 
+    startTick = System.currentTimeMillis();
     // copy origin column
     if (columns.containsKey(pair.left)) {
       List<List<ShortestPath>> listColumn = columns.get(pair.left);
@@ -331,6 +340,7 @@ public class App {
       }
     }
 
+    System.err.println("Copy orig column: " + (System.currentTimeMillis() - startTick));
 
     // update graph
 //      List<Integer> list;
@@ -347,6 +357,7 @@ public class App {
 
   private static void processDelete(Pair<Integer, Integer> pair) {
 
+    long startTick = System.currentTimeMillis();
     if(pathIndex.containsKey(pair)) {
 
 //      // update graph
@@ -380,6 +391,7 @@ public class App {
       for(ShortestPath sp : toRemove)
         removePathIndexEntries(sp);
     }
+    System.err.println("processDelete time: " + (System.currentTimeMillis() - startTick));
   }
 
   private static void readBatches()  {
@@ -395,6 +407,9 @@ public class App {
       System.out.println("R");
       String s;
       while ((s = in.readLine()) != null && s.length() != 0) {
+
+        System.err.println("Rows size: " + rows.size());
+        System.err.println("Columns size: " + columns.size());
 
         char opCode = s.charAt(0);
         switch(opCode) {
