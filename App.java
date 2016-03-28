@@ -476,6 +476,7 @@ public class App {
 
   public static void main(String[] args) {
 
+    System.err.println("Reading graph...");
     readGraph(in);
 /*
     // debug
@@ -487,6 +488,7 @@ public class App {
       System.out.println();
     }
 */
+    System.err.println("Populating shortest path...");
     populateShortestPathTable();
 
 /*
@@ -495,6 +497,7 @@ public class App {
       System.out.println("key: " + entry.getKey() + " :: value: " + entry.getValue().get(0));
 */
 
+    System.err.println("Reading batches...");
     readBatches();
   }
 
