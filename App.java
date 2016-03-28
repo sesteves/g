@@ -43,34 +43,60 @@ public class App {
   }
 
   private static void populateShortestPathTable() {
-    /* non-recursive
-    for(Map.Entry<Integer, List<Integer>> entry : graph.entrySet()) {    
-      int origNode = entry.getKey();           
-      Queue queue = new LinkedList<Integer>();
-      queue.add(origNode);
-      int distance = 0; 
-      while(!queue.isEmpty()) {
-        int node = queue.remove();
+    // non-recursive
+    for(Integer origNode : graph.keySet()) {
 
-        List<Intger, Integer> destNodes; 
-        if(graph.containsKey(node)) {
-          destNodes = graph.get(node);
+      Queue<ShortestPath> queue = new LinkedList<ShortestPath>();
+      queue.add(new ShortestPath(origNode, origNode, -1, new HashMap<Integer, Integer>()));
+
+      while(!queue.isEmpty()) {
+        ShortestPath shortestPath = queue.remove();
+
+        List<Integer> destNodes;
+        if(graph.containsKey(shortestPath.last)) {
+          destNodes = graph.get(shortestPath.last);
         } else {
           continue;
         }
-        distance += 1; 
         for(int destNode : destNodes) {       
-          Map<Integer, Integer> path = new HashMap<Integer, Integer>();        
-          shortestPaths.put(new Pair(orig, destNode), new ShortestPath(  , path));
-          queue.add(destNode);
+
+          Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(shortestPath.path);
+          newPath.put(shortestPath.last, destNode);
+          int distance = newPath.keySet().size();
+          ShortestPath newShortestPath = new ShortestPath(shortestPath.head, destNode, distance, newPath);
+          Pair<Integer, Integer> pair = newShortestPath.pair;
+
+          List<ShortestPath> paths;
+          if (shortestPaths.containsKey(pair))
+            paths = shortestPaths.get(pair);
+          else
+            paths = new ArrayList<ShortestPath>();
+
+          int index = 0;
+          for (int j = 0; j < paths.size(); j++)
+            if (distance < paths.get(j).value) {
+              index = j;
+              break;
+            }
+          paths.add(index, shortestPath);
+          shortestPaths.put(pair, paths);
+
+          queue.add(newShortestPath);
         }
       }
     }
-    */
 
 
-    for(Integer node : graph.keySet())
-      searchShortestPath(node, node, new HashMap<Integer, Integer>(), 0);
+
+
+
+
+
+//    for(Integer node : graph.keySet()) {
+//      List<Integer> pathList = new ArrayList<Integer>();
+//      pathList.add(node);
+//      searchShortestPath(node, node, new HashMap<Integer, Integer>(), pathList, 0);
+//    }
 
     // update rows and columns
     for(Map.Entry<Pair<Integer, Integer>, List<ShortestPath>> entry : shortestPaths.entrySet()) {
@@ -95,6 +121,8 @@ public class App {
 
 
   private static void addPathIndexEntries(ShortestPath shortestPath) {
+    long startTick = System.currentTimeMillis();
+
     Map<Integer, Integer> path = shortestPath.path;
     for(Integer orig : path.keySet()) {
       int n = orig;
@@ -113,9 +141,13 @@ public class App {
         n = dest;
       }
     }
+
+    System.err.println("addPathIndexEntries time: " + (System.currentTimeMillis() - startTick));
   }
 
   private static void removePathIndexEntries(ShortestPath shortestPath) {
+    long startTick = System.currentTimeMillis();
+
     Map<Integer, Integer> path = shortestPath.path;
     for(Integer orig : path.keySet()) {
       int n = orig;
@@ -131,9 +163,13 @@ public class App {
         n = dest;
       }
     }
+
+    System.err.println("removePathIndexEntries time: " + (System.currentTimeMillis() - startTick));
   }
 
   private static void updateRowsAndColumns(int orig, int dest, List<ShortestPath> paths) {
+    long startTick = System.currentTimeMillis();
+
     // update rows
     List<List<ShortestPath>> row;
     if(rows.containsKey(orig))
@@ -151,6 +187,8 @@ public class App {
       column = new ArrayList<List<ShortestPath>>();
     column.add(paths);
     columns.put(dest, column);
+
+    System.err.println("updateRowsAndColumns time: " + (System.currentTimeMillis() - startTick));
   }
 
   private static void searchShortestPath(int origNode, int node, Map<Integer, Integer> path, int distance) {
@@ -165,7 +203,7 @@ public class App {
     for(int destNode : destNodes) {
       if(path.containsKey(destNode))
         continue;
-     
+
       Pair<Integer, Integer> pair = new Pair<Integer, Integer>(origNode, destNode);
       Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(path);
       newPath.put(node, destNode);
@@ -404,6 +442,7 @@ public class App {
 //      }
 
     try {
+      System.gc();
       System.out.println("R");
       String s;
       while ((s = in.readLine()) != null && s.length() != 0) {
