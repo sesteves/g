@@ -7,7 +7,7 @@ public class App {
 
   static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-  static Map<Integer, List<Integer>> graph = new TreeMap<Integer, List<Integer>>();
+  static Map<Integer, Set<Integer>> graph = new TreeMap<Integer, Set<Integer>>();
 
   static Map<Pair<Integer, Integer>, List<ShortestPath>> shortestPaths =
           new HashMap<Pair<Integer, Integer>, List<ShortestPath>>();
@@ -18,7 +18,7 @@ public class App {
           new HashMap<Pair<Integer, Integer>, List<ShortestPath>>();
 
 
-  private static Map<Integer, List<Integer>> readGraph(BufferedReader in) {
+  private static Map<Integer, Set<Integer>> readGraph(BufferedReader in) {
 
     try {
       String s;
@@ -27,13 +27,14 @@ public class App {
         String[] elements = s.split("\\s+");
         int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
 
-        List<Integer> list; 
+        Set<Integer> set;
         if(graph.containsKey(edge[0]))
-          list = graph.get(edge[0]);
+          set = graph.get(edge[0]);
         else
-          list = new ArrayList<Integer>();
-        list.add(edge[1]);
-        graph.put(edge[0], list);
+          set = new HashSet<Integer>();
+
+        set.add(edge[1]);
+        graph.put(edge[0], set);
 
       }
     } catch(Exception e) {
@@ -54,7 +55,7 @@ public class App {
       while(!queue.isEmpty()) {
         ShortestPath shortestPath = queue.remove();
 
-        List<Integer> destNodes;
+        Set<Integer> destNodes;
         if(graph.containsKey(shortestPath.last)) {
           destNodes = graph.get(shortestPath.last);
         } else {
@@ -200,7 +201,7 @@ public class App {
 
   private static void searchShortestPath(int origNode, int node, Map<Integer, Integer> path, int distance) {
 
-    List<Integer> destNodes; 
+    Set<Integer> destNodes;
     if(graph.containsKey(node))
       destNodes = graph.get(node);
     else
