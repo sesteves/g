@@ -1,13 +1,12 @@
 import java.io.*;
 import java.util.*;
-import java.util.ArrayList;
 
 
 public class App {
 
   static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-  static Map<Integer, Set<Integer>> graph = new TreeMap<Integer, Set<Integer>>();
+  static Map<Integer, Set<Integer>> graph = new HashMap<Integer, Set<Integer>>();
 
   static Map<Pair<Integer, Integer>, List<ShortestPath>> shortestPaths =
           new HashMap<Pair<Integer, Integer>, List<ShortestPath>>();
@@ -22,6 +21,7 @@ public class App {
 
     try {
       String s;
+      int count = 0;
       while (!"S".equals(s = in.readLine())) {
 
         String[] elements = s.split("\\s+");
@@ -35,17 +35,17 @@ public class App {
 
         set.add(edge[1]);
         graph.put(edge[0], set);
-
+        count++;
       }
+      System.err.println("Number of edges: " + count);
     } catch(Exception e) {
       e.printStackTrace();
     }
+
     return graph;
   }
 
   private static void populateShortestPathTable() {
-
-    System.err.println("Graph keys: " + graph.keySet().size());
 
     // non-recursive
     for(Integer origNode : graph.keySet()) {
