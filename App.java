@@ -43,9 +43,11 @@ public class App {
   }
 
   private static void populateShortestPathTable() {
+
+    System.err.println("Graph keys: " + graph.keySet().size());
+
     // non-recursive
     for(Integer origNode : graph.keySet()) {
-
       Queue<ShortestPath> queue = new LinkedList<ShortestPath>();
       queue.add(new ShortestPath(origNode, origNode, -1, new HashMap<Integer, Integer>()));
 
@@ -59,6 +61,9 @@ public class App {
           continue;
         }
         for(int destNode : destNodes) {       
+
+          if(shortestPath.path.containsKey(destNode))
+            continue;
 
           Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(shortestPath.path);
           newPath.put(shortestPath.last, destNode);
@@ -79,6 +84,8 @@ public class App {
               break;
             }
           paths.add(index, shortestPath);
+          if(paths.size() > 3)
+            paths.remove(paths.size() - 1);
           shortestPaths.put(pair, paths);
 
           queue.add(newShortestPath);
