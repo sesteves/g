@@ -23,14 +23,14 @@ public class App2 {
                 while(++i < values.size() && values.get(i) < value);
                 values.add(i, value);
             } else {
-                values = Collections.synchronizedList(new ArrayList<Integer>());
+                values = new ArrayList<Integer>();
                 values.add(value);
                 innerColumns.put(column, values);
                 rows.put(row, innerColumns);
                 newValues = true;
             }
         } else {
-            values = Collections.synchronizedList(new ArrayList<Integer>());
+            values = new ArrayList<Integer>();
             values.add(value);
             Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>();
             innerColumns.put(column, values);
@@ -69,14 +69,14 @@ public class App2 {
                             continue;
                         values.add(0, 1);
                     } else {
-                        values = Collections.synchronizedList(new ArrayList<Integer>());
+                        values = new ArrayList<Integer>();
                         values.add(1);
                         innerColumns.put(edge[1], values);
                         newValues = true;
                     }
                 } else {
                     Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>();
-                    values = Collections.synchronizedList(new ArrayList<Integer>());
+                    values = new ArrayList<Integer>();
                     values.add(1);
                     innerColumns.put(edge[1], values);
                     rows.put(edge[0], innerColumns);
@@ -98,10 +98,10 @@ public class App2 {
                      Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
                      Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
                      for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-                         List<Integer> rowValues = row.getValue();
+                         List<Integer> rowValues = new ArrayList(row.getValue());
                          for(int rowValue : rowValues) {
                              for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                                 List<Integer> columnValues = column.getValue();
+                                 List<Integer> columnValues = new ArrayList(column.getValue());
                                  for(int columnValue : columnValues) {
                                      insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue);
                                  }
@@ -129,6 +129,7 @@ public class App2 {
                 }
 
                 count++;
+                System.err.println("Number of edges processed: " + count);
             }
             System.err.println("Number of edges: " + count);
         } catch(Exception e) {
@@ -183,7 +184,9 @@ public class App2 {
 
     public static void main(String[] args) {
         System.err.println("Reading graph and populating table...");
+        long startTick = System.currentTimeMillis();
         readGraph();
+        System.err.println("Took " + (System.currentTimeMillis() - startTick));
 
         System.err.println("Reading batches...");
         readBatches();
