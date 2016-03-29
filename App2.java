@@ -6,15 +6,51 @@ import java.util.*;
  */
 public class App2 {
 
+    static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+
     static Map<Integer, Map<Integer, List<Integer>>> rows = new HashMap<Integer, Map<Integer, List<Integer>>>();
     static Map<Integer, Map<Integer, List<Integer>>> columns = new HashMap<Integer, Map<Integer, List<Integer>>>();
 
     private static void insertOnTable(int row, int column, int value) {
+        boolean newValues = false;
+        List<Integer> values = null;
+        if(rows.containsKey(row)) {
+            Map<Integer, List<Integer>> innerColumns = rows.get(row);
+            if(innerColumns.containsKey(column)) {
+                values = innerColumns.get(column);
 
+                int i = -1;
+                while(++i < values.size() && values.get(i) < value);
+                values.add(i, value);
+            } else {
+                values = new ArrayList<>();
+                values.add(value);
+                innerColumns.put(column, values);
+                rows.put(row, innerColumns);
+                newValues = true;
+            }
+        } else {
+            values = new ArrayList<>();
+            values.add(value);
+            Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>();
+            innerColumns.put(column, values);
+            rows.put(row, innerColumns);
+            newValues = true;
+        }
 
+        if(newValues) {
+            Map<Integer, List<Integer>> innerRows;
+            if(columns.containsKey(column)) {
+                innerRows = columns.get(column);
+            } else {
+                innerRows = new HashMap<>();
+            }
+            innerRows.put(row, values);
+            columns.put(column, innerRows);
+        }
     }
 
-    private static void readGraph(BufferedReader in) {
+    private static void readGraph() {
         try {
             String s;
             int count = 0;
@@ -51,26 +87,46 @@ public class App2 {
                     if(columns.containsKey(edge[1])) {
                         innerRows = columns.get(edge[1]);
                     } else {
-                        innerRows = new HashMap<Integer, List<Integer>>();
+                        innerRows = new HashMap<>();
                     }
                     innerRows.put(edge[0], values);
                     columns.put(edge[1], innerRows);
                 }
 
 
-                if(rows.containsKey(edge[1])) {
+                if(rows.containsKey(edge[1]) && columns.containsKey(edge[0])) {
+                     Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
+                     Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
+                     for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                         List<Integer> rowValues = row.getValue();
+                         for(int rowValue : rowValues) {
+                             for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                                 List<Integer> columnValues = column.getValue();
+                                 for(int columnValue : columnValues) {
+                                     insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue);
+                                 }
+                             }
+                         }
+                     }
+                }
 
+                if(rows.containsKey(edge[1])) {
+                    Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
+                    for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                        List<Integer> list = column.getValue();
+                        for(int value : list)
+                            insertOnTable(edge[0], column.getKey(), value + 1);
+                    }
                 }
 
                 if(columns.containsKey(edge[0])) {
-
+                    Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
+                    for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                        List<Integer> list = row.getValue();
+                        for(int value : list)
+                            insertOnTable(row.getKey(), edge[1], value + 1);
+                    }
                 }
-
-
-
-
-
-
 
                 count++;
             }
@@ -106,16 +162,16 @@ public class App2 {
                 switch(opCode) {
                     case 'Q':
                         String[] elements = s.substring(2).split(" ");
-                        int result = processQuery(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
-                        System.out.println(result);
+//                        int result = processQuery(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
+//                        System.out.println(result);
                         break;
                     case 'A':
-                        elements = s.substring(2).split(" ");
-                        processAdd(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
+//                        elements = s.substring(2).split(" ");
+//                        processAdd(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
                         break;
                     case 'D':
-                        elements = s.substring(2).split(" ");
-                        processDelete(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
+//                        elements = s.substring(2).split(" ");
+//                        processDelete(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
                         break;
                 }
 
@@ -127,7 +183,7 @@ public class App2 {
 
     public static void main(String[] args) {
         System.err.println("Reading graph and populating table...");
-        readGraph(in);
+        readGraph();
 
         System.err.println("Reading batches...");
         readBatches();
