@@ -95,12 +95,16 @@ public class App2 {
 
 
                 if(rows.containsKey(edge[1]) && columns.containsKey(edge[0])) {
+
                      Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
                      Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
                      for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
                          List<Integer> rowValues = new ArrayList(row.getValue());
                          for(int rowValue : rowValues) {
                              for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                                 if(column.getKey() == row.getKey() || row.getKey() == edge[1] || column.getKey() == edge[0])
+                                     continue;
+
                                  List<Integer> columnValues = new ArrayList(column.getValue());
                                  for(int columnValue : columnValues) {
                                      insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue);
