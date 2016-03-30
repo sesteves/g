@@ -3,6 +3,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Created by Sergio on 29/03/2016.
@@ -13,6 +15,9 @@ public class App2 {
 
     static Map<Integer, Map<Integer, List<Integer>>> rows = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
     static Map<Integer, Map<Integer, List<Integer>>> columns = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
+
+    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<>();
+    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<>();
 
     private static void insertOnTable(int row, int column, int value) {
         boolean newValues = false;
@@ -70,39 +75,87 @@ public class App2 {
                         boolean newValues = false;
                         List<Integer> values;
                         if(rows.containsKey(edge[0])) {
+                            // lock row
+                            rowLocks.get(edge[0]).lock();
+
                             Map<Integer, List<Integer>> innerColumns = rows.get(edge[0]);
                             if(innerColumns.containsKey(edge[1])) {
+                                // lock column
+                                columnLocks.get(edge[1]).lock();
+
                                 values = innerColumns.get(edge[1]);
                                 if(values.get(0) == 1)
                                     return;
                                 values.add(0, 1);
+
                             } else {
+                                // lock column
+                                Lock lock = new ReentrantLock();
+                                lock.lock();
+                                columnLocks.put(edge[1], lock);
+
                                 values = Collections.synchronizedList(new ArrayList<Integer>());
                                 values.add(1);
                                 innerColumns.put(edge[1], values);
                                 newValues = true;
                             }
+
+                            // unlock row and column
+                            columnLocks.get(edge[1]).unlock();
+                            rowLocks.get(edge[0]).unlock();
                         } else {
+                            // lock row and column
+                            Lock rowLock = new ReentrantLock();
+                            rowLock.lock();
+                            rowLocks.put(edge[0], rowLock);
+                            Lock columnLock = new ReentrantLock();
+                            columnLock.lock();
+                            columnLocks.put(edge[1], columnLock);
+
                             Map<Integer, List<Integer>> innerColumns = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
                             values = Collections.synchronizedList(new ArrayList<Integer>());
                             values.add(1);
                             innerColumns.put(edge[1], values);
                             rows.put(edge[0], innerColumns);
+
+                            // unlock row and column
+                            rowLock.unlock();
+                            columnLock.unlock();
+
                             newValues = true;
                         }
                         if(newValues) {
                             Map<Integer, List<Integer>> innerRows;
                             if(columns.containsKey(edge[1])) {
+                                // lock column and row
+                                columnLocks.get(edge[1]).lock();
+                                rowLocks.get(edge[0]).lock();
+
                                 innerRows = columns.get(edge[1]);
                             } else {
+                                // lock column and row
+                                Lock columnLock = new ReentrantLock();
+                                columnLock.lock();
+                                columnLocks.put(edge[1], columnLock);
+                                Lock rowLock = new ReentrantLock();
+                                rowLock.lock();
+                                rowLocks.put(edge[0], rowLock);
+
                                 innerRows = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
                             }
                             innerRows.put(edge[0], values);
                             columns.put(edge[1], innerRows);
+
+                            // unlock column and row
+                            columnLocks.get(edge[1]).unlock();
+                            rowLocks.get(edge[0]).unlock();
                         }
 
 
                         if(rows.containsKey(edge[1]) && columns.containsKey(edge[0])) {
+                            // lock row and column
+                            rowLocks.get(edge[1]).lock();
+                            columnLocks.get(edge[0]).lock();
 
                             Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
                             Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
@@ -122,9 +175,16 @@ public class App2 {
                                     }
                                 }
                             }
+
+                            // unlock row and column
+                            rowLocks.get(edge[1]).unlock();
+                            columnLocks.get(edge[0]).unlock();
                         }
 
                         if(rows.containsKey(edge[1])) {
+                            // lock row
+                            rowLocks.get(edge[1]).lock();
+
                             Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
                             for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
                                 if(column.getKey() == edge[0])
@@ -133,9 +193,15 @@ public class App2 {
                                 for(int value : list)
                                     insertOnTable(edge[0], column.getKey(), value + 1);
                             }
+
+                            // unlock row
+                            rowLocks.get(edge[1]).unlock();
                         }
 
                         if(columns.containsKey(edge[0])) {
+                            // lock column
+                            columnLocks.get(edge[0]).lock();
+
                             Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
                             for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
                                 if(row.getKey() == edge[1])
@@ -144,6 +210,9 @@ public class App2 {
                                 for(int value : list)
                                     insertOnTable(row.getKey(), edge[1], value + 1);
                             }
+
+                            // unlock column
+                            columnLocks.get(edge[0]).unlock();
                         }
 
                     }
