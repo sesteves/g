@@ -228,10 +228,12 @@ public class App3 {
                         rowLock2.unlock();
                         columnLock.unlock();
                         columnLock2.unlock();
-                        for(int row : innerRowsSet)
-                            rowLocks.get(row).unlock();
-                        for(int column : innerColumnsSet)
-                            columnLocks.get(column).unlock();
+                        if (innerRowsSet != null)
+                            for (int row : innerRowsSet)
+                                rowLocks.get(row).unlock();
+                        if (innerColumnsSet != null)
+                            for (int column : innerColumnsSet)
+                                columnLocks.get(column).unlock();
 
                     }
                 });
