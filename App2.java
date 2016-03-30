@@ -1,5 +1,6 @@
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -10,8 +11,8 @@ public class App2 {
 
     static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-    static Map<Integer, Map<Integer, List<Integer>>> rows = new HashMap<Integer, Map<Integer, List<Integer>>>();
-    static Map<Integer, Map<Integer, List<Integer>>> columns = new HashMap<Integer, Map<Integer, List<Integer>>>();
+    static Map<Integer, Map<Integer, List<Integer>>> rows = new ConcurrentHashMap<Integer, Map<Integer, List<Integer>>>();
+    static Map<Integer, Map<Integer, List<Integer>>> columns = new ConcurrentHashMap<Integer, Map<Integer, List<Integer>>>();
 
     private static void insertOnTable(int row, int column, int value) {
         boolean newValues = false;
@@ -34,7 +35,7 @@ public class App2 {
         } else {
             values = new ArrayList<Integer>();
             values.add(value);
-            Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>();
+            Map<Integer, List<Integer>> innerColumns = new ConcurrentHashMap<Integer, List<Integer>>();
             innerColumns.put(column, values);
             rows.put(row, innerColumns);
             newValues = true;
@@ -45,7 +46,7 @@ public class App2 {
             if(columns.containsKey(column)) {
                 innerRows = columns.get(column);
             } else {
-                innerRows = new HashMap<Integer, List<Integer>>();
+                innerRows = new ConcurrentHashMap<Integer, List<Integer>>();
             }
             innerRows.put(row, values);
             columns.put(column, innerRows);
@@ -82,7 +83,7 @@ public class App2 {
                                 newValues = true;
                             }
                         } else {
-                            Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>();
+                            Map<Integer, List<Integer>> innerColumns = new ConcurrentHashMap<Integer, List<Integer>>();
                             values = new ArrayList<Integer>();
                             values.add(1);
                             innerColumns.put(edge[1], values);
@@ -94,7 +95,7 @@ public class App2 {
                             if(columns.containsKey(edge[1])) {
                                 innerRows = columns.get(edge[1]);
                             } else {
-                                innerRows = new HashMap<Integer, List<Integer>>();
+                                innerRows = new ConcurrentHashMap<Integer, List<Integer>>();
                             }
                             innerRows.put(edge[0], values);
                             columns.put(edge[1], innerRows);
@@ -103,7 +104,7 @@ public class App2 {
 
                         if(rows.containsKey(edge[1]) && columns.containsKey(edge[0])) {
 
-                            Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>(rows.get(edge[1]));
+                            Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
                             Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
                             for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
                                 if(row.getKey() == edge[1])
@@ -211,6 +212,14 @@ public class App2 {
         long startTick = System.currentTimeMillis();
         readGraph();
         System.err.println("Took " + (System.currentTimeMillis() - startTick));
+
+        // debug
+        for(Map.Entry<Integer, Map<Integer, List<Integer>>> entry : rows.entrySet())
+            for(Map.Entry<Integer, List<Integer>> entry2 : entry.getValue().entrySet())
+                System.err.println("row: " + entry.getKey() + ", col: " + entry2.getKey() + ", value: " +
+                        entry2.getValue().get(0));
+
+
 
         System.err.println("Reading batches...");
         readBatches();
