@@ -4,6 +4,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -20,25 +21,28 @@ public class App3 {
     static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<>();
     static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<>();
 
+    static Lock generalLock = new ReentrantLock();
+
     private static void insertOnTable(int row, int column, int value) {
 
         // lock row and column
-        Lock rowLock;
-        if(rowLocks.containsKey(row))
-            rowLock = rowLocks.get(row);
-        else
-            rowLock = new ReentrantLock();
-        rowLock.lock();
-        rowLocks.put(row, rowLock);
-
-        Lock columnLock;
-        if(columnLocks.containsKey(column))
-            columnLock = columnLocks.get(column);
-        else
-            columnLock = new ReentrantLock();
-        columnLock.lock();
-        columnLocks.put(column, columnLock);
-
+//        generalLock.lock();
+//        Lock rowLock;
+//        if(rowLocks.containsKey(row))
+//            rowLock = rowLocks.get(row);
+//        else
+//            rowLock = new ReentrantLock();
+//        rowLock.lock();
+//        rowLocks.put(row, rowLock);
+//
+//        Lock columnLock;
+//        if(columnLocks.containsKey(column))
+//            columnLock = columnLocks.get(column);
+//        else
+//            columnLock = new ReentrantLock();
+//        columnLock.lock();
+//        columnLocks.put(column, columnLock);
+//        generalLock.unlock();
 
 
         boolean newValues = false;
@@ -79,8 +83,10 @@ public class App3 {
         }
 
         // unlock row and column
-        rowLock.unlock();
-        columnLock.unlock();
+//        generalLock.lock();
+//        columnLock.unlock();
+//        rowLock.unlock();
+//        generalLock.unlock();
     }
 
     private static void readGraph() {
@@ -98,18 +104,25 @@ public class App3 {
                         int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
 
                         // lock rows and columns
+                        //generalLock.lock();
+                        System.err.println("CHECK1");
                         Lock rowLock;
                         Set<Integer> innerColumnsSet = null;
                         if(rowLocks.containsKey(edge[1])) {
                             rowLock = rowLocks.get(edge[1]);
-                            innerColumnsSet = rows.get(edge[1]).keySet();
-                            for(int column : innerColumnsSet)
-                                columnLocks.get(column).lock();
-                        } else
+                            rowLock.lock();
+                            if(rows.containsKey(edge[1])) {
+                                innerColumnsSet = rows.get(edge[1]).keySet();
+                                for (int column : innerColumnsSet)
+                                    if(column != edge[0])
+                                        columnLocks.get(column).lock();
+                            }
+                        } else {
                             rowLock = new ReentrantLock();
-                        rowLock.lock();
+                            rowLock.lock();
+                        }
                         rowLocks.put(edge[1], rowLock);
-
+                        System.err.println("CHECK1-1");
                         Lock rowLock2;
                         if(rowLocks.containsKey(edge[0]))
                             rowLock2 = rowLocks.get(edge[0]);
@@ -117,19 +130,24 @@ public class App3 {
                             rowLock2 = new ReentrantLock();
                         rowLock2.lock();
                         rowLocks.put(edge[0], rowLock2);
-
+                        System.err.println("CHECK1-2");
                         Lock columnLock;
                         Set<Integer> innerRowsSet = null;
                         if(columnLocks.containsKey(edge[0])) {
                             columnLock = columnLocks.get(edge[0]);
-                            innerRowsSet = columns.get(edge[0]).keySet();
-                            for(int row : innerRowsSet)
-                                rowLocks.get(row).lock();
-                        } else
+                            columnLock.lock();
+                            if(columns.containsKey(edge[0])) {
+                                innerRowsSet = columns.get(edge[0]).keySet();
+                                for (int row : innerRowsSet)
+                                    if(row != edge[1])
+                                        rowLocks.get(row).lock();
+                            }
+                        } else {
                             columnLock = new ReentrantLock();
-                        columnLock.lock();
+                            columnLock.lock();
+                        }
                         columnLocks.put(edge[0], columnLock);
-
+                        System.err.println("CHECK1-3");
                         Lock columnLock2;
                         if(columnLocks.containsKey(edge[1]))
                             columnLock2 = columnLocks.get(edge[1]);
@@ -137,8 +155,8 @@ public class App3 {
                             columnLock2 = new ReentrantLock();
                         columnLock2.lock();
                         columnLocks.put(edge[1], columnLock2);
-
-
+                        System.err.println("CHECK2");
+                        //generalLock.unlock();
 
 
 
@@ -185,14 +203,14 @@ public class App3 {
                                 if(row.getKey() == edge[1])
                                     continue;
 
-                                List<Integer> rowValues = Collections.synchronizedList(new ArrayList<Integer>());
+                                List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
                                 for(int rowValue : rowValues) {
                                     for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
                                         if(column.getKey() == row.getKey() || column.getKey() == edge[0])
                                             continue;
-                                        List<Integer> columnValues = Collections.synchronizedList(new ArrayList<Integer>());
+                                        List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
                                         for(int columnValue : columnValues) {
-                                            insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue);
+                                            insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
                                         }
                                     }
                                 }
@@ -224,16 +242,20 @@ public class App3 {
 
 
                         // unlock rows and columns
-                        rowLock.unlock();
-                        rowLock2.unlock();
-                        columnLock.unlock();
+                        //generalLock.lock();
+                        System.err.println("CHECK3");
                         columnLock2.unlock();
                         if (innerRowsSet != null)
                             for (int row : innerRowsSet)
                                 rowLocks.get(row).unlock();
+                        columnLock.unlock();
+                        rowLock2.unlock();
                         if (innerColumnsSet != null)
                             for (int column : innerColumnsSet)
                                 columnLocks.get(column).unlock();
+                        rowLock.unlock();
+                        System.err.println("CHECK4");
+                        //generalLock.unlock();
 
                     }
                 });
@@ -242,6 +264,7 @@ public class App3 {
                 System.err.println("Number of edges processed: " + count);
             }
             executor.shutdown();
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             System.err.println("Number of edges: " + count);
         } catch(Exception e) {
             e.printStackTrace();
