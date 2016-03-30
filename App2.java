@@ -45,7 +45,7 @@ public class App2 {
             if(columns.containsKey(column)) {
                 innerRows = columns.get(column);
             } else {
-                innerRows = new HashMap<>();
+                innerRows = new HashMap<Integer, List<Integer>>();
             }
             innerRows.put(row, values);
             columns.put(column, innerRows);
@@ -58,11 +58,12 @@ public class App2 {
             String s;
             int count = 0;
             while (!"S".equals(s = in.readLine())) {
+                final String[] elements = s.split("\\s+");
 
                 executor.execute(new Runnable() {
                     @Override
                     public void run() {
-                        String[] elements = s.split("\\s+");
+
                         int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
 
                         boolean newValues = false;
@@ -72,7 +73,7 @@ public class App2 {
                             if(innerColumns.containsKey(edge[1])) {
                                 values = innerColumns.get(edge[1]);
                                 if(values.get(0) == 1)
-                                    continue;
+                                    return;
                                 values.add(0, 1);
                             } else {
                                 values = new ArrayList<Integer>();
@@ -93,7 +94,7 @@ public class App2 {
                             if(columns.containsKey(edge[1])) {
                                 innerRows = columns.get(edge[1]);
                             } else {
-                                innerRows = new HashMap<>();
+                                innerRows = new HashMap<Integer, List<Integer>>();
                             }
                             innerRows.put(edge[0], values);
                             columns.put(edge[1], innerRows);
