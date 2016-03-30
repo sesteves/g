@@ -99,9 +99,13 @@ public class App3 {
 
                         // lock rows and columns
                         Lock rowLock;
-                        if(rowLocks.containsKey(edge[1]))
+                        Set<Integer> innerColumnsSet = null;
+                        if(rowLocks.containsKey(edge[1])) {
                             rowLock = rowLocks.get(edge[1]);
-                        else
+                            innerColumnsSet = rows.get(edge[1]).keySet();
+                            for(int column : innerColumnsSet)
+                                columnLocks.get(column).lock();
+                        } else
                             rowLock = new ReentrantLock();
                         rowLock.lock();
                         rowLocks.put(edge[1], rowLock);
@@ -115,9 +119,13 @@ public class App3 {
                         rowLocks.put(edge[0], rowLock2);
 
                         Lock columnLock;
-                        if(columnLocks.containsKey(edge[0]))
+                        Set<Integer> innerRowsSet = null;
+                        if(columnLocks.containsKey(edge[0])) {
                             columnLock = columnLocks.get(edge[0]);
-                        else
+                            innerRowsSet = columns.get(edge[0]).keySet();
+                            for(int row : innerRowsSet)
+                                rowLocks.get(row).lock();
+                        } else
                             columnLock = new ReentrantLock();
                         columnLock.lock();
                         columnLocks.put(edge[0], columnLock);
@@ -129,6 +137,8 @@ public class App3 {
                             columnLock2 = new ReentrantLock();
                         columnLock2.lock();
                         columnLocks.put(edge[1], columnLock2);
+
+
 
 
 
@@ -218,6 +228,11 @@ public class App3 {
                         rowLock2.unlock();
                         columnLock.unlock();
                         columnLock2.unlock();
+                        for(int row : innerRowsSet)
+                            rowLocks.get(row).unlock();
+                        for(int column : innerColumnsSet)
+                            columnLocks.get(column).unlock();
+
                     }
                 });
 
