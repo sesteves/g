@@ -1,5 +1,8 @@
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RunnableFuture;
 
 
 public class App {
@@ -47,51 +50,60 @@ public class App {
 
   private static void populateShortestPathTable() {
 
+    ExecutorService executor = Executors.newFixedThreadPool(8);
     // non-recursive
     for(Integer origNode : graph.keySet()) {
-      Queue<ShortestPath> queue = new LinkedList<ShortestPath>();
+      final Queue<ShortestPath> queue = new LinkedList<ShortestPath>();
       queue.add(new ShortestPath(origNode, origNode, -1, new HashMap<Integer, Integer>()));
 
       while(!queue.isEmpty()) {
-        ShortestPath shortestPath = queue.remove();
+        final ShortestPath shortestPath = queue.remove();
 
-        Set<Integer> destNodes;
-        if(graph.containsKey(shortestPath.last)) {
-          destNodes = graph.get(shortestPath.last);
-        } else {
-          continue;
-        }
-        for(int destNode : destNodes) {       
-
-          if(shortestPath.path.containsKey(destNode))
-            continue;
-
-          Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(shortestPath.path);
-          newPath.put(shortestPath.last, destNode);
-          int distance = newPath.keySet().size();
-          ShortestPath newShortestPath = new ShortestPath(shortestPath.head, destNode, distance, newPath);
-          Pair<Integer, Integer> pair = newShortestPath.pair;
-
-          List<ShortestPath> paths;
-          if (shortestPaths.containsKey(pair))
-            paths = shortestPaths.get(pair);
-          else
-            paths = new ArrayList<ShortestPath>();
-
-          int index = 0;
-          for (int j = 0; j < paths.size(); j++)
-            if (distance < paths.get(j).value) {
-              index = j;
-              break;
+        executor.execute(new Runnable() {
+          @Override
+          public void run() {
+            Set<Integer> destNodes;
+            if (graph.containsKey(shortestPath.last)) {
+              destNodes = graph.get(shortestPath.last);
+            } else {
+              return;
             }
-          paths.add(index, shortestPath);
-          if(paths.size() > 3)
-            paths.remove(paths.size() - 1);
-          shortestPaths.put(pair, paths);
+            for (int destNode : destNodes) {
 
-          queue.add(newShortestPath);
-        }
+              if (shortestPath.path.containsKey(destNode))
+                continue;
+
+              Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(shortestPath.path);
+              newPath.put(shortestPath.last, destNode);
+              int distance = newPath.keySet().size();
+              ShortestPath newShortestPath = new ShortestPath(shortestPath.head, destNode, distance, newPath);
+              Pair<Integer, Integer> pair = newShortestPath.pair;
+
+              List<ShortestPath> paths;
+              if (shortestPaths.containsKey(pair))
+                paths = shortestPaths.get(pair);
+              else
+                paths = new ArrayList<ShortestPath>();
+
+              int index = 0;
+              for (int j = 0; j < paths.size(); j++)
+                if (distance < paths.get(j).value) {
+                  index = j;
+                  break;
+                }
+              paths.add(index, shortestPath);
+              if (paths.size() > 3)
+                paths.remove(paths.size() - 1);
+              shortestPaths.put(pair, paths);
+
+              queue.add(newShortestPath);
+
+            }
+          }
+        });
+
       }
+      executor.shutdown();
     }
 
 
