@@ -11,8 +11,8 @@ public class App2 {
 
     static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-    static Map<Integer, Map<Integer, List<Integer>>> rows = new ConcurrentHashMap<Integer, Map<Integer, List<Integer>>>();
-    static Map<Integer, Map<Integer, List<Integer>>> columns = new ConcurrentHashMap<Integer, Map<Integer, List<Integer>>>();
+    static Map<Integer, Map<Integer, List<Integer>>> rows = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
+    static Map<Integer, Map<Integer, List<Integer>>> columns = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
 
     private static void insertOnTable(int row, int column, int value) {
         boolean newValues = false;
@@ -35,7 +35,7 @@ public class App2 {
         } else {
             values = new ArrayList<Integer>();
             values.add(value);
-            Map<Integer, List<Integer>> innerColumns = new ConcurrentHashMap<Integer, List<Integer>>();
+            Map<Integer, List<Integer>> innerColumns = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
             innerColumns.put(column, values);
             rows.put(row, innerColumns);
             newValues = true;
@@ -46,7 +46,7 @@ public class App2 {
             if(columns.containsKey(column)) {
                 innerRows = columns.get(column);
             } else {
-                innerRows = new ConcurrentHashMap<Integer, List<Integer>>();
+                innerRows = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
             }
             innerRows.put(row, values);
             columns.put(column, innerRows);
@@ -83,7 +83,7 @@ public class App2 {
                                 newValues = true;
                             }
                         } else {
-                            Map<Integer, List<Integer>> innerColumns = new ConcurrentHashMap<Integer, List<Integer>>();
+                            Map<Integer, List<Integer>> innerColumns = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
                             values = new ArrayList<Integer>();
                             values.add(1);
                             innerColumns.put(edge[1], values);
@@ -95,7 +95,7 @@ public class App2 {
                             if(columns.containsKey(edge[1])) {
                                 innerRows = columns.get(edge[1]);
                             } else {
-                                innerRows = new ConcurrentHashMap<Integer, List<Integer>>();
+                                innerRows = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
                             }
                             innerRows.put(edge[0], values);
                             columns.put(edge[1], innerRows);
