@@ -1,5 +1,7 @@
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Created by Sergio on 29/03/2016.
@@ -52,95 +54,103 @@ public class App2 {
 
     private static void readGraph() {
         try {
+            ExecutorService executor = Executors.newFixedThreadPool(8);
             String s;
             int count = 0;
             while (!"S".equals(s = in.readLine())) {
 
-                String[] elements = s.split("\\s+");
-                int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        String[] elements = s.split("\\s+");
+                        int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
 
-                boolean newValues = false;
-                List<Integer> values;
-                if(rows.containsKey(edge[0])) {
-                    Map<Integer, List<Integer>> innerColumns = rows.get(edge[0]);
-                    if(innerColumns.containsKey(edge[1])) {
-                        values = innerColumns.get(edge[1]);
-                        if(values.get(0) == 1)
-                            continue;
-                        values.add(0, 1);
-                    } else {
-                        values = new ArrayList<Integer>();
-                        values.add(1);
-                        innerColumns.put(edge[1], values);
-                        newValues = true;
+                        boolean newValues = false;
+                        List<Integer> values;
+                        if(rows.containsKey(edge[0])) {
+                            Map<Integer, List<Integer>> innerColumns = rows.get(edge[0]);
+                            if(innerColumns.containsKey(edge[1])) {
+                                values = innerColumns.get(edge[1]);
+                                if(values.get(0) == 1)
+                                    continue;
+                                values.add(0, 1);
+                            } else {
+                                values = new ArrayList<Integer>();
+                                values.add(1);
+                                innerColumns.put(edge[1], values);
+                                newValues = true;
+                            }
+                        } else {
+                            Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>();
+                            values = new ArrayList<Integer>();
+                            values.add(1);
+                            innerColumns.put(edge[1], values);
+                            rows.put(edge[0], innerColumns);
+                            newValues = true;
+                        }
+                        if(newValues) {
+                            Map<Integer, List<Integer>> innerRows;
+                            if(columns.containsKey(edge[1])) {
+                                innerRows = columns.get(edge[1]);
+                            } else {
+                                innerRows = new HashMap<>();
+                            }
+                            innerRows.put(edge[0], values);
+                            columns.put(edge[1], innerRows);
+                        }
+
+
+                        if(rows.containsKey(edge[1]) && columns.containsKey(edge[0])) {
+
+                            Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>(rows.get(edge[1]));
+                            Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
+                            for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                                if(row.getKey() == edge[1])
+                                    continue;
+                                List<Integer> rowValues = new ArrayList(row.getValue());
+                                for(int rowValue : rowValues) {
+                                    for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                                        if(column.getKey() == row.getKey() || column.getKey() == edge[0])
+                                            continue;
+
+                                        List<Integer> columnValues = new ArrayList(column.getValue());
+                                        for(int columnValue : columnValues) {
+                                            insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if(rows.containsKey(edge[1])) {
+                            Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
+                            for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                                if(column.getKey() == edge[0])
+                                    continue;
+                                List<Integer> list = column.getValue();
+                                for(int value : list)
+                                    insertOnTable(edge[0], column.getKey(), value + 1);
+                            }
+                        }
+
+                        if(columns.containsKey(edge[0])) {
+                            Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
+                            for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                                if(row.getKey() == edge[1])
+                                    continue;
+                                List<Integer> list = row.getValue();
+                                for(int value : list)
+                                    insertOnTable(row.getKey(), edge[1], value + 1);
+                            }
+                        }
+
                     }
-                } else {
-                    Map<Integer, List<Integer>> innerColumns = new HashMap<Integer, List<Integer>>();
-                    values = new ArrayList<Integer>();
-                    values.add(1);
-                    innerColumns.put(edge[1], values);
-                    rows.put(edge[0], innerColumns);
-                    newValues = true;
-                }
-                if(newValues) {
-                    Map<Integer, List<Integer>> innerRows;
-                    if(columns.containsKey(edge[1])) {
-                        innerRows = columns.get(edge[1]);
-                    } else {
-                        innerRows = new HashMap<>();
-                    }
-                    innerRows.put(edge[0], values);
-                    columns.put(edge[1], innerRows);
-                }
-
-
-                if(rows.containsKey(edge[1]) && columns.containsKey(edge[0])) {
-
-                     Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
-                     Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
-                     for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-                         if(row.getKey() == edge[1])
-                             continue;
-                         List<Integer> rowValues = new ArrayList(row.getValue());
-                         for(int rowValue : rowValues) {
-                             for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                                 if(column.getKey() == row.getKey() || column.getKey() == edge[0])
-                                     continue;
-
-                                 List<Integer> columnValues = new ArrayList(column.getValue());
-                                 for(int columnValue : columnValues) {
-                                     insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue);
-                                 }
-                             }
-                         }
-                     }
-                }
-
-                if(rows.containsKey(edge[1])) {
-                    Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
-                    for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                        if(column.getKey() == edge[0])
-                            continue;
-                        List<Integer> list = column.getValue();
-                        for(int value : list)
-                            insertOnTable(edge[0], column.getKey(), value + 1);
-                    }
-                }
-
-                if(columns.containsKey(edge[0])) {
-                    Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
-                    for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-                        if(row.getKey() == edge[1])
-                            continue;
-                        List<Integer> list = row.getValue();
-                        for(int value : list)
-                            insertOnTable(row.getKey(), edge[1], value + 1);
-                    }
-                }
+                });
 
                 count++;
                 System.err.println("Number of edges processed: " + count);
             }
+            executor.shutdown();
             System.err.println("Number of edges: " + count);
         } catch(Exception e) {
             e.printStackTrace();
