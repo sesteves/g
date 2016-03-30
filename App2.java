@@ -16,8 +16,8 @@ public class App2 {
     static Map<Integer, Map<Integer, List<Integer>>> rows = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
     static Map<Integer, Map<Integer, List<Integer>>> columns = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
 
-    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<>();
-    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<>();
+    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<Integer, Lock>();
+    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<Integer, Lock>();
 
     private static void insertOnTable(int row, int column, int value) {
         boolean newValues = false;
