@@ -99,10 +99,12 @@ public class App2 {
                      Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
                      Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
                      for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                         if(row.getKey() == edge[1])
+                             continue;
                          List<Integer> rowValues = new ArrayList(row.getValue());
                          for(int rowValue : rowValues) {
                              for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                                 if(column.getKey() == row.getKey() || row.getKey() == edge[1] || column.getKey() == edge[0])
+                                 if(column.getKey() == row.getKey() || column.getKey() == edge[0])
                                      continue;
 
                                  List<Integer> columnValues = new ArrayList(column.getValue());
@@ -117,6 +119,8 @@ public class App2 {
                 if(rows.containsKey(edge[1])) {
                     Map<Integer, List<Integer>> innerColumns = rows.get(edge[1]);
                     for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                        if(column.getKey() == edge[0])
+                            continue;
                         List<Integer> list = column.getValue();
                         for(int value : list)
                             insertOnTable(edge[0], column.getKey(), value + 1);
@@ -126,6 +130,8 @@ public class App2 {
                 if(columns.containsKey(edge[0])) {
                     Map<Integer, List<Integer>> innerRows = columns.get(edge[0]);
                     for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                        if(row.getKey() == edge[1])
+                            continue;
                         List<Integer> list = row.getValue();
                         for(int value : list)
                             insertOnTable(row.getKey(), edge[1], value + 1);
