@@ -159,8 +159,14 @@ public class App2 {
     }
 
 
-    private static int processQuery() {
-        return 0;
+    private static int processQuery(int orig, int dest) {
+        if(orig == dest)
+            return 0;
+        try {
+            return rows.get(orig).get(dest).get(0);
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     private static void processAdd() {
@@ -177,15 +183,12 @@ public class App2 {
             String s;
             while ((s = in.readLine()) != null && s.length() != 0) {
 
-                System.err.println("Rows size: " + rows.size());
-                System.err.println("Columns size: " + columns.size());
-
                 char opCode = s.charAt(0);
                 switch(opCode) {
                     case 'Q':
                         String[] elements = s.substring(2).split(" ");
-//                        int result = processQuery(new Pair<Integer, Integer>(Integer.parseInt(elements[0]), Integer.parseInt(elements[1])));
-//                        System.out.println(result);
+                        int result = processQuery(Integer.parseInt(elements[0]), Integer.parseInt(elements[1]));
+                        System.out.println(result);
                         break;
                     case 'A':
 //                        elements = s.substring(2).split(" ");
