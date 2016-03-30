@@ -247,12 +247,14 @@ public class App3 {
                         columnLock2.unlock();
                         if (innerRowsSet != null)
                             for (int row : innerRowsSet)
-                                rowLocks.get(row).unlock();
+                                if(row != edge[1])
+                                    rowLocks.get(row).unlock();
                         columnLock.unlock();
                         rowLock2.unlock();
                         if (innerColumnsSet != null)
                             for (int column : innerColumnsSet)
-                                columnLocks.get(column).unlock();
+                                if(column != edge[0])
+                                    columnLocks.get(column).unlock();
                         rowLock.unlock();
                         System.err.println("CHECK4");
                         //generalLock.unlock();
