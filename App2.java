@@ -23,14 +23,25 @@ public class App2 {
         boolean newValues = false;
         List<Integer> values = null;
         if(rows.containsKey(row)) {
+            // lock row
+            rowLocks.get(row).lock();
+
             Map<Integer, List<Integer>> innerColumns = rows.get(row);
             if(innerColumns.containsKey(column)) {
+                // lock column
+                columnLocks.get(column).lock();
+
                 values = innerColumns.get(column);
 
                 int i = -1;
                 while(++i < values.size() && values.get(i) < value);
                 values.add(i, value);
             } else {
+                // lock column
+                Lock columnLock = new ReentrantLock();
+                columnLock.lock();
+                columnLocks.put(column, columnLock);
+
                 values = Collections.synchronizedList(new ArrayList<Integer>());
                 values.add(value);
                 innerColumns.put(column, values);
@@ -38,6 +49,14 @@ public class App2 {
                 newValues = true;
             }
         } else {
+            // lock row and column
+            Lock rowLock = new ReentrantLock();
+            rowLock.lock();
+            rowLocks.put(row, rowLock);
+            Lock columnLock = new ReentrantLock();
+            columnLock.lock();
+            columnLocks.put(column, columnLock);
+
             values = Collections.synchronizedList(new ArrayList<Integer>());
             values.add(value);
             Map<Integer, List<Integer>> innerColumns = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
@@ -56,6 +75,10 @@ public class App2 {
             innerRows.put(row, values);
             columns.put(column, innerRows);
         }
+
+        // unlock row and column
+        rowLocks.get(row).unlock();
+        columnLocks.get(column).unlock();
     }
 
     private static void readGraph() {
@@ -162,18 +185,30 @@ public class App2 {
                             for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
                                 if(row.getKey() == edge[1])
                                     continue;
+                                // lock row
+                                rowLocks.get(row.getKey()).lock();
+
                                 List<Integer> rowValues = Collections.synchronizedList(new ArrayList<Integer>());
                                 for(int rowValue : rowValues) {
                                     for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
                                         if(column.getKey() == row.getKey() || column.getKey() == edge[0])
                                             continue;
+                                        // lock column
+                                        columnLocks.get(column.getKey()).lock();
 
                                         List<Integer> columnValues = Collections.synchronizedList(new ArrayList<Integer>());
                                         for(int columnValue : columnValues) {
                                             insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue);
                                         }
+
+                                        // unlock column
+                                        columnLocks.get(column.getKey()).unlock();
                                     }
                                 }
+
+                                // unlock row
+                                rowLocks.get(row.getKey()).unlock();
+
                             }
 
                             // unlock row and column
@@ -189,9 +224,17 @@ public class App2 {
                             for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
                                 if(column.getKey() == edge[0])
                                     continue;
+
+                                // lock column
+                                columnLocks.get(column.getKey()).lock();
+
                                 List<Integer> list = column.getValue();
                                 for(int value : list)
                                     insertOnTable(edge[0], column.getKey(), value + 1);
+
+                                // unlock column
+                                columnLocks.get(column.getKey()).unlock();
+
                             }
 
                             // unlock row
@@ -206,9 +249,15 @@ public class App2 {
                             for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
                                 if(row.getKey() == edge[1])
                                     continue;
+                                // lock row
+                                rowLocks.get(row.getKey()).lock();
+
                                 List<Integer> list = row.getValue();
                                 for(int value : list)
                                     insertOnTable(row.getKey(), edge[1], value + 1);
+
+                                // unlock row
+                                rowLocks.get(row.getKey()).unlock();
                             }
 
                             // unlock column
