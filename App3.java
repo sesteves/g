@@ -321,25 +321,29 @@ public class App3 {
                   removeFromTable(row, dest);
             }
 
-            if(rows.containsKey(dest)) {
+            if (rows.containsKey(dest)) {
                 Map<Integer, List<Integer>> innerColumns2 = rows.get(dest);
                 for (int row : innerRows.keySet()) {
-                    for (int column : innerColumns2.keySet())
-                        removeFromTable(row, column);
+                    if (row != dest)
+                        for (int column : innerColumns2.keySet())
+                            if (column != orig)
+                                removeFromTable(row, column);
                 }
             }
         }
 
-        if(rows.containsKey(dest)) {
+        if (rows.containsKey(dest)) {
             Map<Integer, List<Integer>> innerColumns2 = rows.get(dest);
             for (int column : innerColumns2.keySet())
-                if(column != orig)
+                if (column != orig)
                     removeFromTable(orig, column);
-            if(columns.containsKey(orig)) {
+            if (columns.containsKey(orig)) {
                 Map<Integer, List<Integer>> innerRows = columns.get(orig);
-                for(int row : innerRows.keySet())
-                    for (int column : innerColumns2.keySet())
-                        removeFromTable(row, column);
+                for (int row : innerRows.keySet())
+                    if (row != dest)
+                        for (int column : innerColumns2.keySet())
+                            if (column != orig)
+                                removeFromTable(row, column);
             }
         }
     }
