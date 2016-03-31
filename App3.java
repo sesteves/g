@@ -326,7 +326,7 @@ public class App3 {
                 for (int row : innerRows.keySet()) {
                     if (row != dest)
                         for (int column : innerColumns2.keySet())
-                            if (column != orig)
+                            if (column != orig && row != column)
                                 removeFromTable(row, column);
                 }
             }
@@ -342,7 +342,7 @@ public class App3 {
                 for (int row : innerRows.keySet())
                     if (row != dest)
                         for (int column : innerColumns2.keySet())
-                            if (column != orig)
+                            if (column != orig && row != column)
                                 removeFromTable(row, column);
             }
         }
