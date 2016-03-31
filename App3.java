@@ -314,38 +314,35 @@ public class App3 {
 
         removeFromTable(orig, dest);
 
-        if(columns.containsKey(orig)) {
-            Map<Integer, List<Integer>> innerRows = columns.get(orig);
-            for(int row : innerRows.keySet()) {
-                if(row != dest)
-                  removeFromTable(row, dest);
-            }
+        Set<Integer> interception = new HashSet<Integer>();
+        if(columns.containsKey(orig) && rows.containsKey(dest)) {
+            Set<Integer> innerRows = columns.get(orig).keySet();
+            interception.addAll(innerRows);
+            Set<Integer> innerColumns = rows.get(dest).keySet();
+            interception.retainAll(innerColumns);
 
-            if (rows.containsKey(dest)) {
-                Map<Integer, List<Integer>> innerColumns2 = rows.get(dest);
-                for (int row : innerRows.keySet()) {
-                    if (row != dest)
-                        for (int column : innerColumns2.keySet())
-                            if (column != orig && row != column)
-                                removeFromTable(row, column);
-                }
+            for (int row : innerRows)
+                if (row != dest && !interception.contains(row))
+                    for (int column : innerColumns)
+                        if (column != orig && !interception.contains(column))
+                            removeFromTable(row, column);
+        }
+
+        if(columns.containsKey(orig)) {
+            Set<Integer> innerRows = columns.get(orig).keySet();
+            for(int row : innerRows) {
+                if(row != dest && !interception.contains(row))
+                  removeFromTable(row, dest);
             }
         }
 
         if (rows.containsKey(dest)) {
-            Map<Integer, List<Integer>> innerColumns2 = rows.get(dest);
-            for (int column : innerColumns2.keySet())
-                if (column != orig)
+            Set<Integer> innerColumns = rows.get(dest).keySet();
+            for (int column : innerColumns)
+                if (column != orig && !interception.contains(column))
                     removeFromTable(orig, column);
-            if (columns.containsKey(orig)) {
-                Map<Integer, List<Integer>> innerRows = columns.get(orig);
-                for (int row : innerRows.keySet())
-                    if (row != dest)
-                        for (int column : innerColumns2.keySet())
-                            if (column != orig && row != column)
-                                removeFromTable(row, column);
-            }
         }
+
     }
 
 
