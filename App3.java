@@ -18,8 +18,8 @@ public class App3 {
     static Map<Integer, Map<Integer, List<Integer>>> rows = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
     static Map<Integer, Map<Integer, List<Integer>>> columns = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
 
-    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<>();
-    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<>();
+    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<Integer, Lock>();
+    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<Integer, Lock>();
 
     static Lock generalLock = new ReentrantLock();
 
@@ -129,8 +129,9 @@ public class App3 {
 
     private static void processAdd(int orig, int dest) {
 
-        // lock rows and columns
+// lock rows and columns
         //generalLock.lock();
+        System.err.println("CHECK1");
         Lock rowLock;
         Set<Integer> innerColumnsSet = null;
         if(rowLocks.containsKey(dest)) {
@@ -147,6 +148,7 @@ public class App3 {
             rowLock.lock();
         }
         rowLocks.put(dest, rowLock);
+        System.err.println("CHECK1-1");
         Lock rowLock2;
         if(rowLocks.containsKey(orig))
             rowLock2 = rowLocks.get(orig);
@@ -154,7 +156,7 @@ public class App3 {
             rowLock2 = new ReentrantLock();
         rowLock2.lock();
         rowLocks.put(orig, rowLock2);
-
+        System.err.println("CHECK1-2");
         Lock columnLock;
         Set<Integer> innerRowsSet = null;
         if(columnLocks.containsKey(orig)) {
@@ -171,7 +173,7 @@ public class App3 {
             columnLock.lock();
         }
         columnLocks.put(orig, columnLock);
-
+        System.err.println("CHECK1-3");
         Lock columnLock2;
         if(columnLocks.containsKey(dest))
             columnLock2 = columnLocks.get(dest);
@@ -179,7 +181,7 @@ public class App3 {
             columnLock2 = new ReentrantLock();
         columnLock2.lock();
         columnLocks.put(dest, columnLock2);
-
+        System.err.println("CHECK2");
         //generalLock.unlock();
 
 
@@ -267,7 +269,7 @@ public class App3 {
 
         // unlock rows and columns
         //generalLock.lock();
-
+        System.err.println("CHECK3");
         columnLock2.unlock();
         if (innerRowsSet != null)
             for (int row : innerRowsSet)
@@ -280,9 +282,8 @@ public class App3 {
                 if(column != orig)
                     columnLocks.get(column).unlock();
         rowLock.unlock();
-
+        System.err.println("CHECK4");
         //generalLock.unlock();
-
     }
 
     private static void removeFromTable(int row, int column) {
