@@ -109,7 +109,7 @@ public class App3 {
                 System.err.println("Number of edges processed: " + count);
             }
             executor.shutdown();
-            // executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             System.err.println("Number of edges: " + count);
         } catch(Exception e) {
             e.printStackTrace();
@@ -317,7 +317,8 @@ public class App3 {
         if(columns.containsKey(orig)) {
             Map<Integer, List<Integer>> innerRows = columns.get(orig);
             for(int row : innerRows.keySet()) {
-                removeFromTable(row, dest);
+                if(row != dest)
+                  removeFromTable(row, dest);
             }
 
             if(rows.containsKey(dest)) {
@@ -332,7 +333,8 @@ public class App3 {
         if(rows.containsKey(dest)) {
             Map<Integer, List<Integer>> innerColumns2 = rows.get(dest);
             for (int column : innerColumns2.keySet())
-                removeFromTable(orig, column);
+                if(column != orig)
+                    removeFromTable(orig, column);
             if(columns.containsKey(orig)) {
                 Map<Integer, List<Integer>> innerRows = columns.get(orig);
                 for(int row : innerRows.keySet())
