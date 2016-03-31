@@ -222,21 +222,23 @@ public class App3 {
         }
 
 
+        Set<Integer> interception = new HashSet<Integer>();
         if(rows.containsKey(dest) && columns.containsKey(orig)) {
             Map<Integer, List<Integer>> innerColumns = rows.get(dest);
             Map<Integer, List<Integer>> innerRows = columns.get(orig);
-            for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-                if(row.getKey() == dest)
-                    continue;
+            interception.addAll(innerRows.keySet());
+            interception.retainAll(innerColumns.keySet());
 
-                List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
-                for(int rowValue : rowValues) {
-                    for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                        if(column.getKey() == row.getKey() || column.getKey() == orig)
-                            continue;
-                        List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
-                        for(int columnValue : columnValues) {
-                            insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
+            for (Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                if (row.getKey() != dest && !interception.contains(row.getKey())) {
+                    List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
+                    for (int rowValue : rowValues) {
+                        for (Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                            if (column.getKey() != orig && !interception.contains(column.getKey())) {
+                                List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
+                                for (int columnValue : columnValues)
+                                    insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
+                            }
                         }
                     }
                 }
@@ -246,25 +248,24 @@ public class App3 {
         if(rows.containsKey(dest)) {
             Map<Integer, List<Integer>> innerColumns = rows.get(dest);
             for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                if(column.getKey() == orig)
-                    continue;
-                List<Integer> list = column.getValue();
-                for(int value : list)
-                    insertOnTable(orig, column.getKey(), value + 1);
+                if(column.getKey() != orig && !interception.contains(column.getKey())) {
+                    List<Integer> list = column.getValue();
+                    for (int value : list)
+                        insertOnTable(orig, column.getKey(), value + 1);
+                }
             }
         }
 
         if(columns.containsKey(orig)) {
             Map<Integer, List<Integer>> innerRows = columns.get(orig);
             for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-                if(row.getKey() == dest)
-                    continue;
-                List<Integer> list = row.getValue();
-                for(int value : list)
-                    insertOnTable(row.getKey(), dest, value + 1);
+                if(row.getKey() != dest && !interception.contains(row.getKey())) {
+                    List<Integer> list = row.getValue();
+                    for (int value : list)
+                        insertOnTable(row.getKey(), dest, value + 1);
+                }
             }
         }
-
 
 
         // unlock rows and columns
@@ -300,7 +301,6 @@ public class App3 {
             if(innerRows.isEmpty())
                 columns.remove(column);
         }
-
     }
 
     private static void processDelete(int orig, int dest) {
