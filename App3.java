@@ -22,6 +22,8 @@ public class App3 {
 
     ExecutorService executor = Executors.newFixedThreadPool(3);
 
+    static Lock interceptionLock = new ReentrantLock();
+
     private static void insertOnTable(int row, int column, int value) {
 
         // lock row and column
@@ -225,15 +227,18 @@ public class App3 {
             columns.put(dest, innerRows);
         }
 
+        Set<Integer> interception = new HashSet<Integer>();
+        Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(dest);
+        Map<Integer, PriorityBlockingQueue<Integer>> innerRows = columns.get(orig);
+        if(innerColumns != null && innerRows != null) {
+            interception.addAll(innerRows.keySet());
+            interception.retainAll(innerColumns.keySet());
+        }
+
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                Set<Integer> interception = new HashSet<Integer>();
                 if (rows.containsKey(dest) && columns.containsKey(orig)) {
-                    Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(dest);
-                    Map<Integer, PriorityBlockingQueue<Integer>> innerRows = columns.get(orig);
-                    interception.addAll(innerRows.keySet());
-                    interception.retainAll(innerColumns.keySet());
 
                     innerRows.entrySet().parallelStream().forEach(row -> {
 //            for (Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
@@ -259,7 +264,6 @@ public class App3 {
             @Override
             public void run() {
                 if(rows.containsKey(dest)) {
-                    Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(dest);
                     innerColumns.entrySet().parallelStream().forEach(column -> {
                         //for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
                         if(column.getKey() != orig && !interception.contains(column.getKey())) {
@@ -277,7 +281,6 @@ public class App3 {
             @Override
             public void run() {
                 if(columns.containsKey(orig)) {
-                    Map<Integer, PriorityBlockingQueue<Integer>> innerRows = columns.get(orig);
                     innerRows.entrySet().parallelStream().forEach(row -> {
                         // for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
                         if(row.getKey() != dest && !interception.contains(row.getKey())) {
