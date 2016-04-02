@@ -91,27 +91,27 @@ public class App3 {
 
     private static void readGraph() {
         try {
-//            ExecutorService executor = Executors.newFixedThreadPool(16);
+            ExecutorService executor = Executors.newFixedThreadPool(16);
             String s;
             int count = 0;
             while (!"S".equals(s = in.readLine())) {
                 final String[] elements = s.split("\\s+");
-                int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
-                processAdd(edge[0], edge[1]);
+//                int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+//                processAdd(edge[0], edge[1]);
 
-//                executor.execute(new Runnable() {
-//                    @Override
-//                    public void run() {
-//                        int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
-//                        processAdd(edge[0], edge[1]);
-//                    }
-//                });
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+                        processAdd(edge[0], edge[1]);
+                    }
+                });
 
                 count++;
                 System.err.println("Number of edges processed: " + count);
             }
-//            executor.shutdown();
-//            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            executor.shutdown();
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             System.err.println("Number of edges: " + count);
         } catch(Exception e) {
             e.printStackTrace();
