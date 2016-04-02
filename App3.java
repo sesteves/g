@@ -1,10 +1,7 @@
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -15,13 +12,15 @@ public class App3 {
 
     static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-    static Map<Integer, Map<Integer, List<Integer>>> rows = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
-    static Map<Integer, Map<Integer, List<Integer>>> columns = Collections.synchronizedMap(new HashMap<Integer, Map<Integer, List<Integer>>>());
+    static Map<Integer, Map<Integer, PriorityBlockingQueue<Integer>>> rows = new ConcurrentHashMap<>();
+    static Map<Integer, Map<Integer, PriorityBlockingQueue<Integer>>> columns = new ConcurrentHashMap<>();
 
     static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<Integer, Lock>();
     static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<Integer, Lock>();
 
     static Lock generalLock = new ReentrantLock();
+
+    ExecutorService executor = Executors.newFixedThreadPool(3);
 
     private static void insertOnTable(int row, int column, int value) {
 
@@ -46,37 +45,37 @@ public class App3 {
 
 
         boolean newValues = false;
-        List<Integer> values = null;
+        PriorityBlockingQueue<Integer> values = null;
         if(rows.containsKey(row)) {
-            Map<Integer, List<Integer>> innerColumns = rows.get(row);
+            Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(row);
             if(innerColumns.containsKey(column)) {
                 values = innerColumns.get(column);
-
-                int i = -1;
-                while(++i < values.size() && values.get(i) < value);
-                values.add(i, value);
+                values.add(value);
+//                int i = -1;
+//                while(++i < values.size() && values.get(i) < value);
+//                values.add(i, value);
             } else {
-                values = Collections.synchronizedList(new ArrayList<Integer>());
+                values = new PriorityBlockingQueue<>();
                 values.add(value);
                 innerColumns.put(column, values);
                 rows.put(row, innerColumns);
                 newValues = true;
             }
         } else {
-            values = Collections.synchronizedList(new ArrayList<Integer>());
+            values = new PriorityBlockingQueue<>();
             values.add(value);
-            Map<Integer, List<Integer>> innerColumns = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
+            Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = new ConcurrentHashMap<>();
             innerColumns.put(column, values);
             rows.put(row, innerColumns);
             newValues = true;
         }
 
         if(newValues) {
-            Map<Integer, List<Integer>> innerRows;
+            Map<Integer, PriorityBlockingQueue<Integer>> innerRows;
             if(columns.containsKey(column)) {
                 innerRows = columns.get(column);
             } else {
-                innerRows = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
+                innerRows = new ConcurrentHashMap<>();
             }
             innerRows.put(row, values);
             columns.put(column, innerRows);
@@ -91,27 +90,27 @@ public class App3 {
 
     private static void readGraph() {
         try {
-            ExecutorService executor = Executors.newFixedThreadPool(16);
+//            ExecutorService executor = Executors.newFixedThreadPool(16);
             String s;
             int count = 0;
             while (!"S".equals(s = in.readLine())) {
                 final String[] elements = s.split("\\s+");
-//                int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
-//                processAdd(edge[0], edge[1]);
+                int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+                processAdd(edge[0], edge[1]);
 
-                executor.execute(new Runnable() {
-                    @Override
-                    public void run() {
-                        int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
-                        processAdd(edge[0], edge[1]);
-                    }
-                });
+//                executor.execute(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+//                        processAdd(edge[0], edge[1]);
+//                    }
+//                });
 
                 count++;
                 System.err.println("Number of edges processed: " + count);
             }
-            executor.shutdown();
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//            executor.shutdown();
+//            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             System.err.println("Number of edges: " + count);
         } catch(Exception e) {
             e.printStackTrace();
@@ -123,7 +122,7 @@ public class App3 {
         if(orig == dest)
             return 0;
         try {
-            return rows.get(orig).get(dest).get(0);
+            return rows.get(orig).get(dest).peek();
         } catch (Exception e) {
             return -1;
         }
@@ -192,89 +191,111 @@ public class App3 {
 
 
         boolean newValues = false;
-        List<Integer> values;
+        PriorityBlockingQueue<Integer> values;
         if(rows.containsKey(orig)) {
-            Map<Integer, List<Integer>> innerColumns = rows.get(orig);
+            Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(orig);
             if(innerColumns.containsKey(dest)) {
                 values = innerColumns.get(dest);
-                if(values.get(0) == 1)
+                if(values.peek() == 1)
                     return;
-                values.add(0, 1);
+                values.add(1);
 
             } else {
-                values = Collections.synchronizedList(new ArrayList<Integer>());
+                values = new PriorityBlockingQueue<>();
                 values.add(1);
                 innerColumns.put(dest, values);
                 newValues = true;
             }
         } else {
-            Map<Integer, List<Integer>> innerColumns = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
-            values = Collections.synchronizedList(new ArrayList<Integer>());
+            Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = new ConcurrentHashMap<>();
+            values = new PriorityBlockingQueue<>();
             values.add(1);
             innerColumns.put(dest, values);
             rows.put(orig, innerColumns);
             newValues = true;
         }
         if(newValues) {
-            Map<Integer, List<Integer>> innerRows;
+            Map<Integer, PriorityBlockingQueue<Integer>> innerRows;
             if(columns.containsKey(dest)) {
                 innerRows = columns.get(dest);
             } else {
-                innerRows = Collections.synchronizedMap(new HashMap<Integer, List<Integer>>());
+                innerRows = new ConcurrentHashMap<>();
             }
             innerRows.put(orig, values);
             columns.put(dest, innerRows);
         }
 
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                Set<Integer> interception = new HashSet<Integer>();
+                if (rows.containsKey(dest) && columns.containsKey(orig)) {
+                    Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(dest);
+                    Map<Integer, PriorityBlockingQueue<Integer>> innerRows = columns.get(orig);
+                    interception.addAll(innerRows.keySet());
+                    interception.retainAll(innerColumns.keySet());
 
-        Set<Integer> interception = new HashSet<Integer>();
-        if(rows.containsKey(dest) && columns.containsKey(orig)) {
-            Map<Integer, List<Integer>> innerColumns = rows.get(dest);
-            Map<Integer, List<Integer>> innerRows = columns.get(orig);
-            interception.addAll(innerRows.keySet());
-            interception.retainAll(innerColumns.keySet());
-
-            innerRows.entrySet().parallelStream().forEach(row -> {
+                    innerRows.entrySet().parallelStream().forEach(row -> {
 //            for (Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-                if (row.getKey() != dest && !interception.contains(row.getKey())) {
-                    List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
-                    for (int rowValue : rowValues) {
-                        for (Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                            if (column.getKey() != orig && !interception.contains(column.getKey())) {
-                                List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
-                                for (int columnValue : columnValues)
-                                    insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
+                        if (row.getKey() != dest && !interception.contains(row.getKey())) {
+                            List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
+                            for (int rowValue : rowValues) {
+                                for (Map.Entry<Integer, PriorityBlockingQueue<Integer>> column : innerColumns.entrySet()) {
+                                    if (column.getKey() != orig && !interception.contains(column.getKey())) {
+                                        List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
+                                        for (int columnValue : columnValues)
+                                            insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
+                                    }
+                                }
                             }
                         }
-                    }
+                    });
                 }
-            });
-        }
 
-        if(rows.containsKey(dest)) {
-            Map<Integer, List<Integer>> innerColumns = rows.get(dest);
-            innerColumns.entrySet().parallelStream().forEach(column -> {
-            //for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-                if(column.getKey() != orig && !interception.contains(column.getKey())) {
-                    List<Integer> list = column.getValue();
-                    for (int value : list)
-                        insertOnTable(orig, column.getKey(), value + 1);
+            }
+        });
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                if(rows.containsKey(dest)) {
+                    Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(dest);
+                    innerColumns.entrySet().parallelStream().forEach(column -> {
+                        //for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                        if(column.getKey() != orig && !interception.contains(column.getKey())) {
+                            PriorityBlockingQueue<Integer> list = column.getValue();
+                            for (int value : list)
+                                insertOnTable(orig, column.getKey(), value + 1);
+                        }
+                    });
                 }
-            });
-        }
 
-        if(columns.containsKey(orig)) {
-            Map<Integer, List<Integer>> innerRows = columns.get(orig);
-            innerRows.entrySet().parallelStream().forEach(row -> {
-            // for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-                if(row.getKey() != dest && !interception.contains(row.getKey())) {
-                    List<Integer> list = row.getValue();
-                    for (int value : list)
-                        insertOnTable(row.getKey(), dest, value + 1);
+            }
+        });
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                if(columns.containsKey(orig)) {
+                    Map<Integer, PriorityBlockingQueue<Integer>> innerRows = columns.get(orig);
+                    innerRows.entrySet().parallelStream().forEach(row -> {
+                        // for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                        if(row.getKey() != dest && !interception.contains(row.getKey())) {
+                            PriorityBlockingQueue<Integer> list = row.getValue();
+                            for (int value : list)
+                                insertOnTable(row.getKey(), dest, value + 1);
+                        }
+                    });
                 }
-            });
-        }
+            }
+        });
 
+        executor.shutdown();
+        try {
+            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         // unlock rows and columns
         //generalLock.lock();
@@ -296,15 +317,15 @@ public class App3 {
     }
 
     private static void removeFromTable(int row, int column) {
-        Map<Integer, List<Integer>> innerColumns = rows.get(row);
-        List<Integer> values = innerColumns.get(column);
+        Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(row);
+        PriorityBlockingQueue<Integer> values = innerColumns.get(column);
         values.remove(0);
         if(values.isEmpty()) {
             innerColumns.remove(column);
             if(innerColumns.isEmpty())
                 rows.remove(row);
 
-            Map<Integer, List<Integer>> innerRows = columns.get(column);
+            Map<Integer, PriorityBlockingQueue<Integer>> innerRows = columns.get(column);
             innerRows.remove(row);
             if(innerRows.isEmpty())
                 columns.remove(column);
@@ -314,7 +335,7 @@ public class App3 {
     private static void processDelete(int orig, int dest) {
         // if edge does not exist
         try {
-            if(rows.get(orig).get(dest).get(0) != 1)
+            if(rows.get(orig).get(dest).peek() != 1)
                 return;
         } catch(Exception e) {
             return;
