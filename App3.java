@@ -15,14 +15,12 @@ public class App3 {
     static Map<Integer, Map<Integer, PriorityBlockingQueue<Integer>>> rows = new ConcurrentHashMap<>();
     static Map<Integer, Map<Integer, PriorityBlockingQueue<Integer>>> columns = new ConcurrentHashMap<>();
 
-    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<Integer, Lock>();
-    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<Integer, Lock>();
+//    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<Integer, Lock>();
+//    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<Integer, Lock>();
+//
+//    static Lock generalLock = new ReentrantLock();
 
-    static Lock generalLock = new ReentrantLock();
-
-    ExecutorService executor = Executors.newFixedThreadPool(3);
-
-    static Lock interceptionLock = new ReentrantLock();
+    static ExecutorService executor = Executors.newFixedThreadPool(3);
 
     private static void insertOnTable(int row, int column, int value) {
 
@@ -52,7 +50,16 @@ public class App3 {
             Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(row);
             if(innerColumns.containsKey(column)) {
                 values = innerColumns.get(column);
+
                 values.add(value);
+                if(values.size() > 3) {
+                    PriorityBlockingQueue<Integer> newQueue = new PriorityBlockingQueue<>();
+                    while(values.size() > 1)
+                        newQueue.add(values.poll());
+                    innerColumns.put(column,newQueue);
+                }
+
+
 //                int i = -1;
 //                while(++i < values.size() && values.get(i) < value);
 //                values.add(i, value);
@@ -132,7 +139,6 @@ public class App3 {
 
     private static void processAdd(int orig, int dest) {
 
-        ExecutorService executor = Executors.newFixedThreadPool(16);
 
 
 // lock rows and columns
