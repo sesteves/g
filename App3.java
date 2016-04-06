@@ -50,15 +50,7 @@ public class App3 {
             Map<Integer, PriorityBlockingQueue<Integer>> innerColumns = rows.get(row);
             if(innerColumns.containsKey(column)) {
                 values = innerColumns.get(column);
-
                 values.add(value);
-                if(values.size() > 3) {
-                    PriorityBlockingQueue<Integer> newQueue = new PriorityBlockingQueue<>();
-                    while(values.size() > 1)
-                        newQueue.add(values.poll());
-                    innerColumns.put(column,newQueue);
-                }
-
 
 //                int i = -1;
 //                while(++i < values.size() && values.get(i) < value);
@@ -251,13 +243,14 @@ public class App3 {
                         if (row.getKey() != dest && !interception.contains(row.getKey())) {
                             List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
                             for (int rowValue : rowValues) {
-                                for (Map.Entry<Integer, PriorityBlockingQueue<Integer>> column : innerColumns.entrySet()) {
+                                innerColumns.entrySet().parallelStream().forEach(column -> {
+                                //for (Map.Entry<Integer, PriorityBlockingQueue<Integer>> column : innerColumns.entrySet()) {
                                     if (column.getKey() != orig && !interception.contains(column.getKey())) {
                                         List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
                                         for (int columnValue : columnValues)
                                             insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
                                     }
-                                }
+                                });
                             }
                         }
                     });
