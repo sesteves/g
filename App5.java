@@ -2,19 +2,42 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
 
-public class App4 {
+public class App5 {
 
     static BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
 
-    static Map<Integer, Set<Integer>> graph = new HashMap<Integer, Set<Integer>>();
     static Map<Integer, Map<Integer, PriorityBlockingQueue<Integer>>> rows = new ConcurrentHashMap<>();
     static Map<Integer, Map<Integer, PriorityBlockingQueue<Integer>>> columns = new ConcurrentHashMap<>();
 
+    static Map<Integer, Lock> rowLocks = new ConcurrentHashMap<Integer, Lock>();
+    static Map<Integer, Lock> columnLocks = new ConcurrentHashMap<Integer, Lock>();
 
     static ExecutorService executor = Executors.newFixedThreadPool(3);
 
     private static void insertOnTable(int row, int column, int value) {
+
+        // lock row and column
+//        generalLock.lock();
+//        Lock rowLock;
+//        if(rowLocks.containsKey(row))
+//            rowLock = rowLocks.get(row);
+//        else
+//            rowLock = new ReentrantLock();
+//        rowLock.lock();
+//        rowLocks.put(row, rowLock);
+//
+//        Lock columnLock;
+//        if(columnLocks.containsKey(column))
+//            columnLock = columnLocks.get(column);
+//        else
+//            columnLock = new ReentrantLock();
+//        columnLock.lock();
+//        columnLocks.put(column, columnLock);
+//        generalLock.unlock();
+
+
         boolean newValues = false;
         PriorityBlockingQueue<Integer> values = null;
         if(rows.containsKey(row)) {
@@ -22,6 +45,7 @@ public class App4 {
             if(innerColumns.containsKey(column)) {
                 values = innerColumns.get(column);
                 values.add(value);
+
 //                int i = -1;
 //                while(++i < values.size() && values.get(i) < value);
 //                values.add(i, value);
@@ -52,84 +76,42 @@ public class App4 {
             columns.put(column, innerRows);
         }
 
+        // unlock row and column
+//        generalLock.lock();
+//        columnLock.unlock();
+//        rowLock.unlock();
+//        generalLock.unlock();
     }
 
     private static void readGraph() {
-
         try {
+            ExecutorService executor = Executors.newFixedThreadPool(16);
             String s;
             int count = 0;
             while (!"S".equals(s = in.readLine())) {
+                final String[] elements = s.split("\\s+");
+//                int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+//                processAdd(edge[0], edge[1]);
 
-                String[] elements = s.split("\\s+");
-                int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+                executor.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        int[] edge = new int[]{Integer.parseInt(elements[0]), Integer.parseInt(elements[1])};
+                        processAdd(edge[0], edge[1]);
+                    }
+                });
 
-                Set<Integer> set;
-                if(graph.containsKey(edge[0]))
-                    set = graph.get(edge[0]);
-                else
-                    set = new HashSet<Integer>();
-
-                set.add(edge[1]);
-                graph.put(edge[0], set);
                 count++;
+                System.err.println("Number of edges processed: " + count);
             }
+//            executor.shutdown();
+//            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
             System.err.println("Number of edges: " + count);
         } catch(Exception e) {
             e.printStackTrace();
         }
     }
 
-    private static void populateTable() {
-//        for(Integer origNode : graph.keySet()) {
-//
-//            final Queue<ShortestPath> queue = new LinkedList<ShortestPath>();
-//            queue.add();
-//
-//
-//            while(!queue.isEmpty()) {
-//                queue.remove();
-//
-//                Set<Integer> destNodes;
-//                if (graph.containsKey(    )) {
-//                    destNodes = graph.get(    );
-//                } else {
-//                    continue;
-//                }
-//                for (int destNode : destNodes) {
-//
-//                    if (shortestPath.path.containsKey(destNode))
-//                        continue;
-//
-//                    Map<Integer, Integer> newPath = new HashMap<Integer, Integer>(shortestPath.path);
-//                    newPath.put(shortestPath.last, destNode);
-//                    int distance = newPath.keySet().size();
-//                    App.ShortestPath newShortestPath = new App.ShortestPath(shortestPath.head, destNode, distance, newPath);
-//                    App.Pair<Integer, Integer> pair = newShortestPath.pair;
-//
-//                    List<App.ShortestPath> paths;
-//                    if (shortestPaths.containsKey(pair))
-//                        paths = shortestPaths.get(pair);
-//                    else
-//                        paths = new ArrayList<App.ShortestPath>();
-//
-//                    int index = 0;
-//                    for (int j = 0; j < paths.size(); j++)
-//                        if (distance < paths.get(j).value) {
-//                            index = j;
-//                            break;
-//                        }
-//                    paths.add(index, shortestPath);
-//                    if (paths.size() > 3)
-//                        paths.remove(paths.size() - 1);
-//                    shortestPaths.put(pair, paths);
-//
-//                    queue.add(newShortestPath);
-//
-//                }
-//            }
-
-    }
 
     private static int processQuery(int orig, int dest) {
         if(orig == dest)
@@ -147,57 +129,57 @@ public class App4 {
 
 // lock rows and columns
         //generalLock.lock();
-//        System.err.println("CHECK1");
-//        Lock rowLock;
-//        Set<Integer> innerColumnsSet = null;
-//        if(rowLocks.containsKey(dest)) {
-//            rowLock = rowLocks.get(dest);
-//            rowLock.lock();
-//            if(rows.containsKey(dest)) {
-//                innerColumnsSet = rows.get(dest).keySet();
-//                for (int column : innerColumnsSet)
-//                    if(column != orig)
-//                        columnLocks.get(column).lock();
-//            }
-//        } else {
-//            rowLock = new ReentrantLock();
-//            rowLock.lock();
-//        }
-//        rowLocks.put(dest, rowLock);
-//        System.err.println("CHECK1-1");
-//        Lock rowLock2;
-//        if(rowLocks.containsKey(orig))
-//            rowLock2 = rowLocks.get(orig);
-//        else
-//            rowLock2 = new ReentrantLock();
-//        rowLock2.lock();
-//        rowLocks.put(orig, rowLock2);
-//        System.err.println("CHECK1-2");
-//        Lock columnLock;
-//        Set<Integer> innerRowsSet = null;
-//        if(columnLocks.containsKey(orig)) {
-//            columnLock = columnLocks.get(orig);
-//            columnLock.lock();
-//            if(columns.containsKey(orig)) {
-//                innerRowsSet = columns.get(orig).keySet();
-//                for (int row : innerRowsSet)
-//                    if(row != dest)
-//                        rowLocks.get(row).lock();
-//            }
-//        } else {
-//            columnLock = new ReentrantLock();
-//            columnLock.lock();
-//        }
-//        columnLocks.put(orig, columnLock);
-//        System.err.println("CHECK1-3");
-//        Lock columnLock2;
-//        if(columnLocks.containsKey(dest))
-//            columnLock2 = columnLocks.get(dest);
-//        else
-//            columnLock2 = new ReentrantLock();
-//        columnLock2.lock();
-//        columnLocks.put(dest, columnLock2);
-//        System.err.println("CHECK2");
+        System.err.println("CHECK1");
+        Lock rowLock;
+        Set<Integer> innerColumnsSet = null;
+        if(rowLocks.containsKey(dest)) {
+            rowLock = rowLocks.get(dest);
+            rowLock.lock();
+            if(rows.containsKey(dest)) {
+                innerColumnsSet = rows.get(dest).keySet();
+                for (int column : innerColumnsSet)
+                    if(column != orig)
+                        columnLocks.get(column).lock();
+            }
+        } else {
+            rowLock = new ReentrantLock();
+            rowLock.lock();
+        }
+        rowLocks.put(dest, rowLock);
+        System.err.println("CHECK1-1");
+        Lock rowLock2;
+        if(rowLocks.containsKey(orig))
+            rowLock2 = rowLocks.get(orig);
+        else
+            rowLock2 = new ReentrantLock();
+        rowLock2.lock();
+        rowLocks.put(orig, rowLock2);
+        System.err.println("CHECK1-2");
+        Lock columnLock;
+        Set<Integer> innerRowsSet = null;
+        if(columnLocks.containsKey(orig)) {
+            columnLock = columnLocks.get(orig);
+            columnLock.lock();
+            if(columns.containsKey(orig)) {
+                innerRowsSet = columns.get(orig).keySet();
+                for (int row : innerRowsSet)
+                    if(row != dest)
+                        rowLocks.get(row).lock();
+            }
+        } else {
+            columnLock = new ReentrantLock();
+            columnLock.lock();
+        }
+        columnLocks.put(orig, columnLock);
+        System.err.println("CHECK1-3");
+        Lock columnLock2;
+        if(columnLocks.containsKey(dest))
+            columnLock2 = columnLocks.get(dest);
+        else
+            columnLock2 = new ReentrantLock();
+        columnLock2.lock();
+        columnLocks.put(dest, columnLock2);
+        System.err.println("CHECK2");
         //generalLock.unlock();
 
 
@@ -248,85 +230,85 @@ public class App4 {
 //        executor.execute(new Runnable() {
 //            @Override
 //            public void run() {
-//                if (rows.containsKey(dest) && columns.containsKey(orig)) {
-//
-//                    innerRows.entrySet().parallelStream().forEach(row -> {
-////            for (Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-//                        if (row.getKey() != dest && !interception.contains(row.getKey())) {
-//                            List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
-//                            for (int rowValue : rowValues) {
-//                                innerColumns.entrySet().parallelStream().forEach(column -> {
-//                                    //for (Map.Entry<Integer, PriorityBlockingQueue<Integer>> column : innerColumns.entrySet()) {
-//                                    if (column.getKey() != orig && !interception.contains(column.getKey())) {
-//                                        List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
-//                                        for (int columnValue : columnValues)
-//                                            insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
-//                                    }
-//                                });
-//                            }
-//                        }
-//                    });
-//                }
-//
-//            }
-//        });
-//
-//        executor.execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                if(rows.containsKey(dest)) {
-//                    innerColumns.entrySet().parallelStream().forEach(column -> {
-//                        //for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
-//                        if(column.getKey() != orig && !interception.contains(column.getKey())) {
-//                            PriorityBlockingQueue<Integer> list = column.getValue();
-//                            for (int value : list)
-//                                insertOnTable(orig, column.getKey(), value + 1);
-//                        }
-//                    });
-//                }
-//
-//            }
-//        });
-//
-//        executor.execute(new Runnable() {
-//            @Override
-//            public void run() {
-//                if(columns.containsKey(orig)) {
-//                    innerRows.entrySet().parallelStream().forEach(row -> {
-//                        // for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
-//                        if(row.getKey() != dest && !interception.contains(row.getKey())) {
-//                            PriorityBlockingQueue<Integer> list = row.getValue();
-//                            for (int value : list)
-//                                insertOnTable(row.getKey(), dest, value + 1);
-//                        }
-//                    });
-//                }
+                if (rows.containsKey(dest) && columns.containsKey(orig)) {
+
+                    innerRows.entrySet().parallelStream().forEach(row -> {
+//            for (Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                        if (row.getKey() != dest && !interception.contains(row.getKey())) {
+                            List<Integer> rowValues = new ArrayList<Integer>(row.getValue());
+                            for (int rowValue : rowValues) {
+                                innerColumns.entrySet().parallelStream().forEach(column -> {
+                                    //for (Map.Entry<Integer, PriorityBlockingQueue<Integer>> column : innerColumns.entrySet()) {
+                                    if (column.getKey() != orig && !interception.contains(column.getKey())) {
+                                        List<Integer> columnValues = new ArrayList<Integer>(column.getValue());
+                                        for (int columnValue : columnValues)
+                                            insertOnTable(row.getKey(), column.getKey(), rowValue + columnValue + 1);
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }
+
 //            }
 //        });
 
-        executor.shutdown();
-        try {
-            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        executor.execute(new Runnable() {
+//            @Override
+//            public void run() {
+                if(rows.containsKey(dest)) {
+                    innerColumns.entrySet().parallelStream().forEach(column -> {
+                        //for(Map.Entry<Integer, List<Integer>> column : innerColumns.entrySet()) {
+                        if(column.getKey() != orig && !interception.contains(column.getKey())) {
+                            PriorityBlockingQueue<Integer> list = column.getValue();
+                            for (int value : list)
+                                insertOnTable(orig, column.getKey(), value + 1);
+                        }
+                    });
+                }
+
+//            }
+//        });
+
+//        executor.execute(new Runnable() {
+//            @Override
+//            public void run() {
+                if(columns.containsKey(orig)) {
+                    innerRows.entrySet().parallelStream().forEach(row -> {
+                        // for(Map.Entry<Integer, List<Integer>> row : innerRows.entrySet()) {
+                        if(row.getKey() != dest && !interception.contains(row.getKey())) {
+                            PriorityBlockingQueue<Integer> list = row.getValue();
+                            for (int value : list)
+                                insertOnTable(row.getKey(), dest, value + 1);
+                        }
+                    });
+                }
+//            }
+//        });
+
+//        executor.shutdown();
+//        try {
+//            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
         // unlock rows and columns
         //generalLock.lock();
-//        System.err.println("CHECK3");
-//        columnLock2.unlock();
-//        if (innerRowsSet != null)
-//            for (int row : innerRowsSet)
-//                if(row != dest)
-//                    rowLocks.get(row).unlock();
-//        columnLock.unlock();
-//        rowLock2.unlock();
-//        if (innerColumnsSet != null)
-//            for (int column : innerColumnsSet)
-//                if(column != orig)
-//                    columnLocks.get(column).unlock();
-//        rowLock.unlock();
-//        System.err.println("CHECK4");
+        System.err.println("CHECK3");
+        columnLock2.unlock();
+        if (innerRowsSet != null)
+            for (int row : innerRowsSet)
+                if(row != dest)
+                    rowLocks.get(row).unlock();
+        columnLock.unlock();
+        rowLock2.unlock();
+        if (innerColumnsSet != null)
+            for (int column : innerColumnsSet)
+                if(column != orig)
+                    columnLocks.get(column).unlock();
+        rowLock.unlock();
+        System.err.println("CHECK4");
         //generalLock.unlock();
     }
 
@@ -425,8 +407,6 @@ public class App4 {
         long startTick = System.currentTimeMillis();
         readGraph();
         System.err.println("Took " + (System.currentTimeMillis() - startTick));
-
-        populateTable();
 
         // debug
 //        for(Map.Entry<Integer, Map<Integer, List<Integer>>> entry : rows.entrySet())
