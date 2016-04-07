@@ -101,8 +101,8 @@ public class App5 {
                     }
                 });
 
-                count++;
-                System.err.println("Number of edges processed: " + count);
+                if(count++ % 10000 == 0)
+                  System.err.println("Number of edges processed: " + count);
             }
 //            executor.shutdown();
 //            executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
@@ -367,8 +367,9 @@ public class App5 {
 
     private static void readBatches()  {
 
+        ExecutorService executor = Executors.newFixedThreadPool(16);
         try {
-            System.gc();
+            // System.gc();
             System.out.println("R");
             String s;
             while ((s = in.readLine()) != null && s.length() != 0) {
@@ -407,7 +408,6 @@ public class App5 {
 //            for(Map.Entry<Integer, List<Integer>> entry2 : entry.getValue().entrySet())
 //                System.err.println("row: " + entry.getKey() + ", col: " + entry2.getKey() + ", value: " +
 //                        entry2.getValue().get(0));
-
 
 
         System.err.println("Reading batches...");
