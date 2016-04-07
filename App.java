@@ -3,6 +3,7 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RunnableFuture;
+import java.util.concurrent.TimeUnit;
 
 
 public class App {
@@ -50,18 +51,19 @@ public class App {
 
   private static void populateShortestPathTable() {
 
-    ExecutorService executor = Executors.newFixedThreadPool(8);
+    //ExecutorService executor = Executors.newFixedThreadPool(8);
     // non-recursive
-    for(Integer origNode : graph.keySet()) {
+    graph.keySet().parallelStream().forEach(origNode -> {
+    //for(Integer origNode : graph.keySet()) {
       final Queue<ShortestPath> queue = new LinkedList<ShortestPath>();
       queue.add(new ShortestPath(origNode, origNode, -1, new HashMap<Integer, Integer>()));
 
       while(!queue.isEmpty()) {
         final ShortestPath shortestPath = queue.remove();
 
-        executor.execute(new Runnable() {
-          @Override
-          public void run() {
+//        executor.execute(new Runnable() {
+//          @Override
+//          public void run() {
             Set<Integer> destNodes;
             if (graph.containsKey(shortestPath.last)) {
               destNodes = graph.get(shortestPath.last);
@@ -101,10 +103,15 @@ public class App {
             }
           }
         });
+//      }
+//      executor.shutdown();
+//      try {
+//        executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+//      } catch (Exception e) {
+//        e.printStackTrace();
+//      }
 
-      }
-      executor.shutdown();
-    }
+//    }
 
 
 
