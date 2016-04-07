@@ -129,7 +129,6 @@ public class App5 {
 
 // lock rows and columns
         //generalLock.lock();
-        System.err.println("CHECK1");
         Lock rowLock;
         Set<Integer> innerColumnsSet = null;
         if(rowLocks.containsKey(dest)) {
@@ -146,7 +145,6 @@ public class App5 {
             rowLock.lock();
         }
         rowLocks.put(dest, rowLock);
-        System.err.println("CHECK1-1");
         Lock rowLock2;
         if(rowLocks.containsKey(orig))
             rowLock2 = rowLocks.get(orig);
@@ -154,7 +152,6 @@ public class App5 {
             rowLock2 = new ReentrantLock();
         rowLock2.lock();
         rowLocks.put(orig, rowLock2);
-        System.err.println("CHECK1-2");
         Lock columnLock;
         Set<Integer> innerRowsSet = null;
         if(columnLocks.containsKey(orig)) {
@@ -171,7 +168,6 @@ public class App5 {
             columnLock.lock();
         }
         columnLocks.put(orig, columnLock);
-        System.err.println("CHECK1-3");
         Lock columnLock2;
         if(columnLocks.containsKey(dest))
             columnLock2 = columnLocks.get(dest);
@@ -179,7 +175,6 @@ public class App5 {
             columnLock2 = new ReentrantLock();
         columnLock2.lock();
         columnLocks.put(dest, columnLock2);
-        System.err.println("CHECK2");
         //generalLock.unlock();
 
 
@@ -295,7 +290,7 @@ public class App5 {
 
         // unlock rows and columns
         //generalLock.lock();
-        System.err.println("CHECK3");
+
         columnLock2.unlock();
         if (innerRowsSet != null)
             for (int row : innerRowsSet)
@@ -308,7 +303,6 @@ public class App5 {
                 if(column != orig)
                     columnLocks.get(column).unlock();
         rowLock.unlock();
-        System.err.println("CHECK4");
         //generalLock.unlock();
     }
 
